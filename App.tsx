@@ -97,8 +97,20 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="container mx-auto px-6 py-4">
         <nav className="flex items-center justify-between">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentStep('upload')}>
-                <span className="bg-primary p-2 rounded-lg">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentStep('upload')}>
+                {/* Updated Navbar Logo */}
+                <img 
+                  src="/logo.png" 
+                  alt="ResumeBoost AI" 
+                  className="w-10 h-10 object-contain drop-shadow-sm" 
+                  onError={(e) => {
+                    // Fallback if image not found
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+                {/* Fallback Icon */}
+                <span className="hidden bg-primary p-2 rounded-lg">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
                 </span>
                 <span className="font-bold text-xl text-gray-900 dark:text-white">ResumeBoost AI</span>
@@ -148,10 +160,11 @@ const App: React.FC = () => {
                             </p>
                         </div>
                         <div className="order-1 md:order-2 flex justify-center">
+                             {/* Updated Hero Image to use new Logo */}
                              <img 
-                                alt="Illustration of a resume document transformed into a circuit board with an AI chip at its center" 
-                                className="w-full max-w-md mx-auto drop-shadow-2xl" 
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5BCopRsNZm1CJtk_uct6fhct4ZuTgGA5jOXyIhoT4Ns4oPfukhuK4q9miRvNVRK-eFxGtYRsItlIPb-Vmf_9iG4Q_aPXP8zv6htHRWaiZUQ2KTyd5joHXfHXucnzXcosoT9t93hHkd62_8bPig2Md0gitTOYLF-cDhN2-nZIfp1RKrBPX8QGqOXdUCj5L1vCc1ZWK_BMhLVjoMLV8SI-5Uf7jCApJwp8iTgCOJmzxFVfswXur8bpGq51pnD05isgvm2yDxO7UhfM"
+                                alt="ResumeBoost AI Logo" 
+                                className="w-full max-w-md mx-auto drop-shadow-2xl object-contain hover:scale-105 transition-transform duration-500" 
+                                src="/logo.png"
                              />
                         </div>
                     </div>

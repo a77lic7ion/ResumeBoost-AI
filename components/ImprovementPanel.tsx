@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { improveResumeContent } from '../services/geminiService';
-import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2, StopCircle } from 'lucide-react';
+import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2, StopCircle, Lightbulb, PenTool } from 'lucide-react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { diffWords } from 'diff';
@@ -67,31 +67,43 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
   const [prompt, setPrompt] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('diff');
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('modern');
+  const [longRunning, setLongRunning] = useState(false);
+  
   const abortControllerRef = useRef<AbortController | null>(null);
   const [previousVersion, setPreviousVersion] = useState(originalText);
 
+  // Sync initial text
   useEffect(() => {
     if (!improvedText) setImprovedText(originalText);
-    setViewMode('diff');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [originalText]);
 
+  // Handle Progress Bar
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (loading) {
         setProgress(0);
+        setLongRunning(false);
         interval = setInterval(() => {
             setProgress(prev => {
-                if (prev >= 99) return 99;
+                // If we get stuck high up, just oscillate slightly or stop incrementing to avoid "hanging" feel
+                if (prev >= 95) {
+                    setLongRunning(true);
+                    return prev < 98 ? prev + 0.1 : 98;
+                }
+                
                 let increment = 0;
-                if (prev < 50) increment = Math.random() * 5 + 3;
-                else if (prev < 80) increment = Math.random() * 2 + 1;
-                else if (prev < 95) increment = 0.5;
-                else increment = 0.05;
-                return Math.min(prev + increment, 99.9);
+                if (prev < 30) increment = Math.random() * 8 + 2;
+                else if (prev < 60) increment = Math.random() * 3 + 1;
+                else if (prev < 80) increment = 0.8;
+                else increment = 0.2;
+                
+                return prev + increment;
             });
-        }, 500);
+        }, 400);
     } else {
         setProgress(100);
+        setLongRunning(false);
     }
     return () => clearInterval(interval);
   }, [loading]);
@@ -104,23 +116,28 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
         abortControllerRef.current.abort();
     }
     abortControllerRef.current = new AbortController();
+    const currentSignal = abortControllerRef.current.signal;
 
     setLoading(true);
     setPreviousVersion(improvedText); 
     
     try {
         const result = await improveResumeContent(improvedText, promptToUse);
-        // Check if aborted before updating state
-        if (abortControllerRef.current?.signal.aborted) {
+        
+        // Critical: Check if this specific request was aborted
+        if (currentSignal.aborted) {
+            console.log('Request aborted, ignoring result');
             return;
         }
+        
         setImprovedText(result);
         setViewMode('diff'); 
     } catch (e) {
-        if (abortControllerRef.current?.signal.aborted) return;
+        if (currentSignal.aborted) return;
         console.error(e);
+        alert("Optimization failed. Please check your API key and try again.");
     } finally {
-        if (!abortControllerRef.current?.signal.aborted) {
+        if (!currentSignal.aborted) {
             setLoading(false);
             abortControllerRef.current = null;
         }
@@ -130,9 +147,12 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
   const handleCancel = () => {
     if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+        abortControllerRef.current = null;
     }
+    // Force reset UI state immediately
     setLoading(false);
     setProgress(0);
+    setLongRunning(false);
   };
 
   const handleCopy = () => {
@@ -196,13 +216,57 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     );
   };
 
-  const actionableIssues = analysisResult?.issues.filter(i => i.severity === IssueSeverity.CRITICAL || i.severity === IssueSeverity.IMPORTANT) || [];
-  const missingKeywords = analysisResult?.aiAnalysis?.missingKeywords || [];
+  // --- Dynamic Suggestions Logic ---
+  const criticalIssues = analysisResult?.issues.filter(i => i.severity === IssueSeverity.CRITICAL || i.severity === IssueSeverity.IMPORTANT) || [];
+  
+  const getSmartSuggestions = () => {
+    const suggestions = [];
+    
+    // Default suggestion
+    suggestions.push({
+      label: "Professional Tone",
+      prompt: "Rewrite the resume to sound more senior, authoritative, and result-oriented. Remove passive language.",
+      icon: <Sparkles size={14} className="text-purple-500" />
+    });
+
+    if (analysisResult?.score) {
+      const { impact, keywords, content } = analysisResult.score.breakdown;
+
+      if (impact < 10) {
+        suggestions.push({
+          label: "Quantify Impact",
+          prompt: "Identify areas in the Experience section where specific numbers, percentages, or dollar amounts can be inferred or added. Rewrite bullet points to emphasize results over tasks.",
+          icon: <Layers size={14} className="text-blue-500" />
+        });
+      }
+
+      if (keywords < 10) {
+        const missing = analysisResult.aiAnalysis?.missingKeywords.slice(0, 3).join(', ') || "industry keywords";
+        suggestions.push({
+          label: "Boost Keywords",
+          prompt: `Rewrite the Skills and Experience sections to naturally incorporate these missing keywords: ${missing}. Ensure they fit the context of the role.`,
+          icon: <Wand2 size={14} className="text-green-500" />
+        });
+      }
+
+      if (content < 15) {
+         suggestions.push({
+            label: "Fix Formatting",
+            prompt: "Standardize the resume formatting. Ensure all dates, locations, and titles are consistent. Fix any spacing issues.",
+            icon: <LayoutTemplate size={14} className="text-orange-500" />
+         });
+      }
+    }
+    
+    return suggestions;
+  };
+
+  const suggestions = getSmartSuggestions();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-zinc-900/80 backdrop-blur-sm animate-fade-in-up">
       {loading && (
-        <div className="fixed inset-0 z-[60] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm flex items-center justify-center">
+        <div className="fixed inset-0 z-[60] bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm flex items-center justify-center">
             <div className="w-full max-w-md p-8 bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-zinc-700 flex flex-col items-center gap-6 mx-4">
                 <div className="relative">
                     <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
@@ -216,9 +280,14 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                     <div className="w-full h-2 bg-gray-100 dark:bg-zinc-700 rounded-full overflow-hidden">
                         <div className="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${progress}%` }}></div>
                     </div>
-                    <p className="text-center text-sm text-gray-500 dark:text-gray-400 pt-2">{progress > 85 ? "Finalizing edits..." : "Applying best practices..."}</p>
+                    <p className="text-center text-sm text-gray-500 dark:text-gray-400 pt-2">
+                      {longRunning ? "Taking longer than usual... still working..." : progress > 85 ? "Finalizing edits..." : "Applying best practices..."}
+                    </p>
                 </div>
-                <button onClick={handleCancel} className="flex items-center gap-2 text-red-500 hover:text-red-600 font-medium text-sm transition-colors py-2 px-4 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+                <button 
+                  onClick={handleCancel} 
+                  className="flex items-center gap-2 text-red-500 hover:text-red-600 font-medium text-sm transition-colors py-2 px-4 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
                     <StopCircle size={16} /> Stop Generating
                 </button>
             </div>
@@ -256,7 +325,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                 <div className="p-5 space-y-6 overflow-y-auto custom-scrollbar h-full">
                     {/* Template Selector */}
                     {viewMode === 'preview' && (
-                         <div>
+                         <div className="animate-fade-in-up">
                             <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
                                <LayoutTemplate size={14} /> Resume Template
                             </label>
@@ -272,26 +341,52 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                          </div>
                     )}
 
-                    {/* Quick Actions */}
+                    {/* Critical Issues Section */}
+                    {criticalIssues.length > 0 && (
+                      <div className="animate-fade-in-up">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-red-500 dark:text-red-400 mb-3 flex items-center gap-2">
+                          <AlertTriangle size={14} /> Critical Fixes
+                        </label>
+                        <div className="space-y-2">
+                          {criticalIssues.map(issue => (
+                             <div key={issue.id} className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 p-3 rounded-lg">
+                               <p className="text-xs text-red-700 dark:text-red-300 font-medium mb-2">{issue.message}</p>
+                               <button 
+                                 onClick={() => handleImprove(`Fix this specific issue in the resume: ${issue.message}. ${issue.remediation}`)}
+                                 className="w-full py-1.5 bg-white dark:bg-zinc-800 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-bold rounded hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex items-center justify-center gap-1"
+                               >
+                                 <PenTool size={12} /> Fix with AI
+                               </button>
+                             </div>
+                          ))}
+                        </div>
+                        <hr className="border-gray-200 dark:border-zinc-800 mt-6" />
+                      </div>
+                    )}
+
+                    {/* Smart Suggestions */}
                     <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">One-Click Optimizations</label>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+                          <Lightbulb size={14} /> Smart Suggestions
+                        </label>
                         <div className="grid grid-cols-1 gap-2">
-                             <button onClick={() => handleImprove("Rewrite the Experience section to be result-oriented using specific metrics.")} className="text-left text-xs bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 p-3 rounded-lg hover:border-primary dark:hover:border-primary hover:shadow-md transition-all text-gray-700 dark:text-gray-300 flex items-center justify-between group">
-                                <span>Add Metrics</span><Wand2 size={12} className="opacity-0 group-hover:opacity-100 text-primary" />
-                             </button>
-                             <button onClick={() => handleImprove("Format skills section for ATS readability.")} className="text-left text-xs bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 p-3 rounded-lg hover:border-primary dark:hover:border-primary hover:shadow-md transition-all text-gray-700 dark:text-gray-300 flex items-center justify-between group">
-                                <span>Format Skills</span><Wand2 size={12} className="opacity-0 group-hover:opacity-100 text-primary" />
-                             </button>
-                             <button onClick={() => handleImprove("Generate a professional summary.")} className="text-left text-xs bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 p-3 rounded-lg hover:border-primary dark:hover:border-primary hover:shadow-md transition-all text-gray-700 dark:text-gray-300 flex items-center justify-between group">
-                                <span>Create Summary</span><Wand2 size={12} className="opacity-0 group-hover:opacity-100 text-primary" />
-                             </button>
+                            {suggestions.map((s, i) => (
+                              <button 
+                                key={i} 
+                                onClick={() => handleImprove(s.prompt)} 
+                                className="text-left text-xs bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 p-3 rounded-lg hover:border-primary dark:hover:border-primary hover:shadow-md transition-all text-gray-700 dark:text-gray-300 flex items-center justify-between group"
+                              >
+                                <span>{s.label}</span>
+                                <span className="opacity-70 group-hover:opacity-100 transition-opacity">{s.icon}</span>
+                              </button>
+                            ))}
                         </div>
                     </div>
 
                     {/* Custom Prompt */}
                     <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Custom Instruction</label>
-                        <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} className="w-full h-24 p-3 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-sm text-gray-800 dark:text-gray-200 outline-none resize-none shadow-sm" placeholder="E.g., 'Make the tone more senior'..." />
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2 mt-4">Custom Instruction</label>
+                        <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} className="w-full h-24 p-3 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-sm text-gray-800 dark:text-gray-200 outline-none resize-none shadow-sm" placeholder="E.g., 'Make the tone more senior' or 'Quantify my achievements'..." />
                         <button onClick={() => handleImprove()} disabled={loading || !prompt.trim()} className={`mt-3 w-full py-3 rounded-xl text-white font-bold shadow-lg transition-all flex items-center justify-center gap-2 ${loading || !prompt.trim() ? 'bg-gray-400 cursor-not-allowed' : 'gradient-btn'}`}>
                             {loading ? <Wand2 className="animate-spin" size={16} /> : <ArrowRight size={16} />}
                             {loading ? 'Optimizing...' : 'Run Custom Edit'}
@@ -328,6 +423,16 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                         </button>
                     </div>
                 </div>
+
+                {/* Inline Critical Alert Banner */}
+                {viewMode === 'edit' && criticalIssues.length > 0 && (
+                   <div className="bg-red-50 dark:bg-red-900/10 border-b border-red-100 dark:border-red-900/30 px-6 py-3 flex items-center gap-3">
+                      <AlertTriangle size={16} className="text-red-500 shrink-0" />
+                      <span className="text-xs text-red-700 dark:text-red-400 font-medium flex-1">
+                         {criticalIssues.length} critical issues detected. Use the <span className="font-bold">Critical Fixes</span> in the sidebar to resolve them.
+                      </span>
+                   </div>
+                )}
 
                 <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-zinc-900/50 p-6 md:p-8 custom-scrollbar relative">
                     {viewMode === 'edit' && (

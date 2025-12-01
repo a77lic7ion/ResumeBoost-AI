@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Check, AlertCircle, Save, Key, Loader2, ShieldCheck } from 'lucide-react';
+import { X, Check, AlertCircle, Save, Key, Loader2, ShieldCheck, ExternalLink } from 'lucide-react';
 import { getSettings, saveSettings } from '../utils/storage';
 import { validateApiKey } from '../services/geminiService';
 
@@ -107,8 +107,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
               <Key size={16} className="absolute left-3 top-2.5 text-slate-400" />
             </div>
             
-            <div className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
-              <span className="flex items-center justify-between">
+            <div className="flex flex-col gap-2">
+              <span className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span>
                     {isUsingEnv 
                     ? <span className="flex items-center gap-1 text-green-600 dark:text-green-400"><ShieldCheck size={12}/> Using secure environment variable</span> 
@@ -116,10 +116,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                         ? "Using custom key provided above" 
                         : "No key found"}
                 </span>
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                    Get API Key
-                </a>
               </span>
+              
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" 
+                 className="flex items-center justify-center gap-2 w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-primary dark:text-blue-400 font-medium rounded-lg text-xs transition-colors border border-slate-200 dark:border-slate-700">
+                  <span>Get a free Gemini API Key here</span>
+                  <ExternalLink size={12} />
+              </a>
+              
               <span className="text-[10px] text-slate-400 mt-1">
                 Note for Vercel: Set variable name to <code>VITE_API_KEY</code>
               </span>

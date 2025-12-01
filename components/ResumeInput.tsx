@@ -4,7 +4,7 @@ import * as mammoth from 'mammoth';
 import { extractTextFromMultimodal } from '../services/geminiService';
 import { getSessions, deleteSession } from '../utils/storage';
 import { SavedSession } from '../types';
-import { Loader2, Trash2, AlertCircle } from 'lucide-react';
+import { Loader2, Trash2, AlertCircle, Camera, Image as ImageIcon, X } from 'lucide-react';
 
 interface ResumeInputProps {
   onAnalyze: (text: string, image?: string) => void;
@@ -17,11 +17,17 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
   const [text, setText] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [extracting, setExtracting] = useState(false);
-  const [extractedImage, setExtractedImage] = useState<string | undefined>(undefined);
+  
+  // Image States
+  const [extractedImage, setExtractedImage] = useState<string | undefined>(undefined); // From DOCX/PDF
+  const [manualImage, setManualImage] = useState<string | undefined>(undefined); // User uploaded
+  
   const [fileName, setFileName] = useState<string>('');
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>([]);
   const [error, setError] = useState<string | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setSavedSessions(getSessions());
@@ -59,14 +65,27 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
     }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      try {
+        const base64 = await fileToBase64(file);
+        // Add data URI prefix if missing (usually fileToBase64 includes it from FileReader)
+        setManualImage(base64.startsWith('data:') ? base64 : `data:${file.type};base64,${base64}`);
+      } catch (err) {
+        console.error("Error uploading photo", err);
+      }
+    }
+  };
+
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
         const result = reader.result as string;
-        const base64 = result.split(',')[1];
-        resolve(base64);
+        // Keep the full data URL for display purposes
+        resolve(result);
       };
       reader.onerror = error => reject(error);
     });
@@ -109,10 +128,13 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         file.type === 'application/pdf' || 
         file.type.startsWith('image/')
       ) {
-        const base64 = await fileToBase64(file);
+        const base64Full = await fileToBase64(file);
+        const base64Data = base64Full.split(',')[1];
+        
         try {
-            const extracted = await extractTextFromMultimodal(base64, file.type);
+            const extracted = await extractTextFromMultimodal(base64Data, file.type);
             setText(extracted);
+            // If it's an image file, use it as the "resume image" as well, though usually not a headshot
         } catch (visionError: any) {
             console.error("Multimodal extraction failed", visionError);
             setError(visionError.message || "Failed to extract text. Check API Key permissions.");
@@ -132,6 +154,9 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
 
   const isLoading = isProcessing || extracting;
   const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+  
+  // Prioritize manual upload, then extracted, then null
+  const activeProfileImage = manualImage || extractedImage;
 
   return (
     <div className="max-w-4xl mx-auto bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-xl dark:shadow-2xl dark:shadow-black/20">
@@ -144,6 +169,45 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
                 <div className="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap">{error}</div>
             </div>
         )}
+
+        {/* Profile Photo Upload Section */}
+        <div className="flex justify-center mb-8">
+            <div className="flex flex-col items-center gap-2">
+                <div className="relative group">
+                    <div 
+                        onClick={() => photoInputRef.current?.click()}
+                        className="w-20 h-20 rounded-full border-2 border-dashed border-gray-300 dark:border-zinc-700 hover:border-primary cursor-pointer flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-zinc-800 transition-colors"
+                    >
+                        {activeProfileImage ? (
+                            <img src={activeProfileImage} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            <Camera className="text-gray-400 dark:text-gray-500 group-hover:text-primary transition-colors" size={24} />
+                        )}
+                    </div>
+                    {activeProfileImage && (
+                        <button 
+                            onClick={() => { setManualImage(undefined); setExtractedImage(undefined); }}
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 shadow-sm hover:bg-red-600"
+                        >
+                            <X size={12} />
+                        </button>
+                    )}
+                </div>
+                <span 
+                    onClick={() => photoInputRef.current?.click()}
+                    className="text-xs font-semibold text-primary cursor-pointer hover:underline"
+                >
+                    {activeProfileImage ? 'Change Photo' : 'Add Photo (Optional)'}
+                </span>
+                <input 
+                    ref={photoInputRef}
+                    type="file" 
+                    accept="image/png, image/jpeg" 
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                />
+            </div>
+        </div>
 
         {/* Tabs */}
         <div className="flex border border-gray-200 dark:border-zinc-700 rounded-lg p-1 bg-gray-100 dark:bg-zinc-800 mb-6 max-w-sm mx-auto">
@@ -168,7 +232,7 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         </div>
 
         {/* Content Area */}
-        <div className="min-h-[250px] flex flex-col">
+        <div className="min-h-[200px] flex flex-col">
             {activeTab === 'upload' ? (
                  <div 
                     className={`flex-1 border-2 border-dashed rounded-lg flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-zinc-800/50 transition-colors cursor-pointer
@@ -200,7 +264,10 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
                             <span className="material-symbols-outlined text-4xl text-green-500">check_circle</span>
                             <p className="font-semibold mt-2 text-gray-800 dark:text-gray-200">{fileName}</p>
                             <p className="text-sm text-gray-500 dark:text-gray-400">{wordCount} words detected</p>
-                            <button onClick={(e) => { e.stopPropagation(); setText(''); setFileName(''); setError(null); }} className="text-xs text-red-500 underline mt-2">Remove File</button>
+                            {extractedImage && !manualImage && (
+                                <p className="text-xs text-indigo-500 flex items-center gap-1"><ImageIcon size={12}/> Auto-detected photo</p>
+                            )}
+                            <button onClick={(e) => { e.stopPropagation(); setText(''); setFileName(''); setError(null); setExtractedImage(undefined); }} className="text-xs text-red-500 underline mt-2">Remove File</button>
                         </div>
                     ) : (
                         <>
@@ -213,7 +280,7 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
             ) : (
                 <div className="flex-1 relative">
                     <textarea 
-                        className="w-full h-full min-h-[250px] p-4 bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-gray-400 dark:placeholder-zinc-500 text-gray-800 dark:text-gray-200 outline-none transition-all"
+                        className="w-full h-full min-h-[200px] p-4 bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-gray-400 dark:placeholder-zinc-500 text-gray-800 dark:text-gray-200 outline-none transition-all"
                         placeholder="Paste your resume text content here..."
                         value={text}
                         onChange={(e) => setText(e.target.value)}
@@ -226,7 +293,7 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         {/* Action Button */}
         <div className="mt-6 flex justify-center">
             <button 
-                onClick={() => onAnalyze(text, extractedImage)}
+                onClick={() => onAnalyze(text, activeProfileImage)}
                 disabled={text.length < 50 || isLoading}
                 className={`gradient-btn text-white font-semibold py-3 px-12 rounded-lg w-full max-w-xs transition-opacity
                  ${text.length < 50 || isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg transform hover:-translate-y-0.5'}`}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { improveResumeContent } from '../services/geminiService';
 import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2, StopCircle } from 'lucide-react';
@@ -109,13 +110,20 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     
     try {
         const result = await improveResumeContent(improvedText, promptToUse);
+        // Check if aborted before updating state
+        if (abortControllerRef.current?.signal.aborted) {
+            return;
+        }
         setImprovedText(result);
         setViewMode('diff'); 
     } catch (e) {
+        if (abortControllerRef.current?.signal.aborted) return;
         console.error(e);
     } finally {
-        setLoading(false);
-        abortControllerRef.current = null;
+        if (!abortControllerRef.current?.signal.aborted) {
+            setLoading(false);
+            abortControllerRef.current = null;
+        }
     }
   };
 

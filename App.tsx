@@ -21,7 +21,6 @@ const App: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -96,27 +95,25 @@ const App: React.FC = () => {
     <div className="gradient-bg min-h-screen flex flex-col selection:bg-primary selection:text-white">
       
       {/* Header */}
-      <header className="container mx-auto px-4 sm:px-6 py-4">
+      <header className="container mx-auto px-6 py-4">
         <nav className="flex items-center justify-between">
             <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentStep('upload')}>
+                {/* Updated Navbar Logo */}
                 <img 
                   src="/logo.png" 
                   alt="ResumeBoost AI" 
-                  className="w-9 h-9 sm:w-10 sm:h-10 object-contain drop-shadow-sm"
+                  className="w-10 h-10 object-contain drop-shadow-sm" 
                   onError={(e) => {
                     // Fallback if image not found
                     e.currentTarget.style.display = 'none';
-                    const fallback = e.currentTarget.nextElementSibling;
-                    if (fallback) {
-                        fallback.classList.remove('hidden');
-                    }
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
                   }}
                 />
                 {/* Fallback Icon */}
                 <span className="hidden bg-primary p-2 rounded-lg">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
                 </span>
-                <span className="font-bold text-lg sm:text-xl text-gray-900 dark:text-white">ResumeBoost AI</span>
+                <span className="font-bold text-xl text-gray-900 dark:text-white">ResumeBoost AI</span>
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
@@ -125,7 +122,7 @@ const App: React.FC = () => {
                 <button className="text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors">About</button>
             </div>
 
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-4">
                  <button 
                     onClick={() => setDarkMode(!darkMode)}
                     className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
@@ -140,33 +137,11 @@ const App: React.FC = () => {
                 </button>
 
                 <a href="#" className="hidden sm:block text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors">Sign In</a>
-                <button className="hidden sm:block gradient-btn text-white text-sm font-semibold py-2 px-3 sm:px-4 rounded-lg shadow-lg hover:shadow-xl transition-all">
+                <button className="gradient-btn text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all">
                     Get Started
                 </button>
-
-                {/* Mobile Menu Button */}
-                <div className="md:hidden">
-                    <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <span className="material-symbols-outlined">{isMobileMenuOpen ? 'close' : 'menu'}</span>
-                    </button>
-                </div>
             </div>
         </nav>
-
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-            <div className="md:hidden mt-4 bg-white dark:bg-zinc-900 rounded-lg shadow-lg p-4 animate-fade-in-up">
-                <nav className="flex flex-col space-y-4">
-                    <button onClick={() => {setCurrentStep('upload'); setIsMobileMenuOpen(false);}} className="text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors text-left">Features</button>
-                    <button onClick={() => {setCurrentStep('upload'); setIsMobileMenuOpen(false);}} className="text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors text-left">Pricing</button>
-                    <button className="text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors text-left">About</button>
-                    <a href="#" className="text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors">Sign In</a>
-                    <button className="w-full gradient-btn text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all">
-                        Get Started
-                    </button>
-                </nav>
-            </div>
-        )}
       </header>
 
       {/* Main Content */}
@@ -174,20 +149,21 @@ const App: React.FC = () => {
          {currentStep === 'upload' ? (
              <div className="animate-fade-in-up">
                  {/* Hero Section */}
-                 <div className="container mx-auto px-4 sm:px-6 pt-8 md:pt-12 pb-16 md:pb-24">
-                    <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+                 <div className="container mx-auto px-6 pt-12 pb-24">
+                    <div className="grid md:grid-cols-2 gap-12 items-center">
                         <div className="order-2 md:order-1 text-center md:text-left">
-                            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight text-gray-900 dark:text-white">
+                            <h1 className="text-4xl md:text-6xl font-bold leading-tight text-gray-900 dark:text-white">
                                 Elevate Your Career with AI-Powered Resume Optimization
                             </h1>
-                            <p className="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-400">
+                            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
                                 Unlock ATS insights, improve your score, and land more interviews instantly with Gemini 2.5 Flash.
                             </p>
                         </div>
                         <div className="order-1 md:order-2 flex justify-center">
+                             {/* Updated Hero Image to use new Logo */}
                              <img 
                                 alt="ResumeBoost AI Logo" 
-                                className="w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto drop-shadow-2xl object-contain hover:scale-105 transition-transform duration-500"
+                                className="w-full max-w-md mx-auto drop-shadow-2xl object-contain hover:scale-105 transition-transform duration-500" 
                                 src="/logo.png"
                              />
                         </div>
@@ -206,7 +182,7 @@ const App: React.FC = () => {
                  <PricingSection />
              </div>
          ) : (
-             <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12 animate-fade-in-up">
+             <div className="container mx-auto px-6 py-12 animate-fade-in-up">
                   <div className="mb-8">
                      <button 
                        onClick={() => setCurrentStep('upload')}
@@ -227,13 +203,13 @@ const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 border-t border-gray-200 dark:border-zinc-800 bg-background-light dark:bg-background-dark">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left gap-6 md:gap-4">
+      <footer className="py-8 px-6 border-t border-gray-200 dark:border-zinc-800 bg-background-light dark:bg-background-dark">
+        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
              <div className="flex items-center gap-2">
                 <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
                 <span className="font-bold text-gray-900 dark:text-white">ResumeBoost AI</span>
              </div>
-             <p className="text-sm text-gray-500 dark:text-gray-400 order-last md:order-none">
+             <p className="text-sm text-gray-500 dark:text-gray-400">
                 Created by AfflictedAI
              </p>
              <div className="flex gap-4">

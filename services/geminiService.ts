@@ -193,6 +193,8 @@ export const improveResumeContent = async (originalText: string, specificInstruc
       - Ensure clear separation between sections.
       - Use strong action verbs.
       - Quantify achievements where numbers are present or can be inferred (e.g. "Managed team of 5").
+      - Calculate and include the duration of employment for each role next to the dates in parentheses (e.g., "Jan 2019 - Dec 2021 (2 years)").
+      - Always include a "References" section at the end. If original references exist, format them professionally. If not, add "## References\nReferences available upon request."
       - Remove any "Strength Graphs" or "Skill Bars" textual representations, convert them to lists.
       - Return ONLY the rewritten markdown. Do not add conversational filler.`,
       config: {

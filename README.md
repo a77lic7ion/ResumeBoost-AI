@@ -1,7 +1,7 @@
 # ResumeBoost AI 🚀
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![React](https://img.shields.io/badge/React-18-61dafb.svg?logo=react)
+![React](https://img.shields.io/badge/React-19-61dafb.svg?logo=react)
 ![Gemini](https://img.shields.io/badge/AI-Gemini%202.5-8e44ad.svg)
 ![Tailwind](https://img.shields.io/badge/Style-Tailwind-38bdf8.svg?logo=tailwindcss)
 
@@ -11,44 +11,50 @@
 
 ### 📄 Universal File Support
 - **Upload Anything:** Supports `PDF`, `DOCX`, `JPG`, `PNG`, and `TXT` files.
-- **Smart Extraction:** Uses client-side libraries for Word docs and **Gemini Vision** for PDFs and Images to accurately transcribe text while preserving logical flow.
+- **Smart Extraction:** 
+  - **Text:** Uses `mammoth.js` for Word docs and **Gemini Multimodal** (Vision) for PDFs/Images.
+  - **Photos:** Automatically extracts profile photos from `.docx` files or allows manual uploads.
 
 ### 🎯 Comprehensive ATS Scoring
-- **40+ Checkpoints:** rigorous analysis against industry standards.
+- **40+ Checkpoints:** Rigorous analysis against industry standards.
 - **Scoring Categories:**
   - **Format:** Checks for length, readability, and structure.
   - **Content:** Validates contact info and section headers.
   - **ATS Compatibility:** Ensures standard section naming.
   - **Keywords:** Analyzes keyword density and relevance.
-  - **Impact:** measures the use of quantifiable metrics and action verbs.
+  - **Impact:** Measures the use of quantifiable metrics and action verbs.
 
-### 🤖 AI-Powered Analysis
+### 🤖 AI-Powered Analysis & Repair
 - **Gemini 2.5 Integration:** Uses the latest Google GenAI models for deep text understanding.
+- **Critical Fixes Banner:** Identifies "deal-breaker" errors (missing contact info, no metrics) and offers **One-Click AI Fixes**.
+- **Auto-Write Summary:** Detects missing summaries and generates a professional executive profile instantly.
 - **Tone Check:** Evaluates professional voice (e.g., Passive vs. Active).
-- **Keyword Gap Analysis:** Identifies missing industry terms based on context.
-- **Executive Summary:** Auto-generates a professional summary of the candidate.
 
-### ✍️ Instant Rewrite Engine
-- **Improvement Panel:** Side-by-side editor to rewrite weak sections.
-- **Contextual Prompts:** Ask the AI to "Fix grammar", "Add metrics", or "Make it sound more senior".
-- **One-Click Copy:** Easily copy optimized text back to your document.
+### ✍️ Instant Rewrite & Preview Studio
+- **Improvement Panel:** Side-by-side editor with Markdown support.
+- **Isolated Preview:** Real-time resume rendering in an isolated environment (Iframe) to prevent style conflicts.
+- **Templates:** Switch between **Modern**, **Classic**, and **Minimal** designs instantly.
+- **Smart Prompts:** Context-aware suggestions based on your specific resume score (e.g., "Quantify Achievements", "Fix Formatting").
 
-### 🔒 Privacy First
-- **Client-Side Processing:** File logic happens in the browser.
-- **Ephemeral AI:** Text sent to the API is for analysis only and not stored.
+### 📤 Export & Privacy
+- **High-Fidelity Export:** Download optimized resumes as **PDF** (via browser print) or **DOCX**.
+- **Privacy First:** Client-side logic for file handling. API keys are stored in your browser's local storage.
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** React, TypeScript, Vite
-- **Styling:** Tailwind CSS
+- **Frontend:** React 19, TypeScript, Vite
+- **Styling:** Tailwind CSS, Lucide React Icons
 - **AI/ML:** Google Gemini API (`@google/genai`)
 - **Visualization:** Recharts
-- **Parsing:**
-  - `mammoth.js` for .docx
-  - `Gemini Multimodal` for .pdf/.images
-- **Icons:** Lucide React
+- **Parsing:** `mammoth.js`, `marked`, `dompurify`
 
 ## 🚀 Getting Started
+
+### Prerequisites
+- Node.js installed.
+- A Google Cloud Project with the **Gemini API** enabled.
+
+### Installation
 
 1.  **Clone the repository:**
     ```bash
@@ -62,23 +68,36 @@
     ```
 
 3.  **Configure API Key:**
-    - Create a `.env` file in the root directory.
-    - Add your Google Gemini API key:
-      ```env
-      API_KEY=your_google_api_key_here
-      ```
+    *   **Option A (Local/Secure):** Create a `.env` file in the root directory.
+        ```env
+        # For Vite/Client-side usage
+        VITE_API_KEY=your_google_api_key_here
+        ```
+    *   **Option B (UI):** You can also enter your API key directly in the application's "Settings" menu (stored in LocalStorage).
 
 4.  **Run the development server:**
     ```bash
     npm run dev
     ```
 
+### ☁️ Deployment (Vercel)
+
+This project is optimized for Vercel deployment.
+
+1.  Import project to Vercel.
+2.  Add Environment Variable: `VITE_API_KEY`.
+3.  Deploy!
+
 ## 📸 Usage
 
-1.  **Upload:** Drag and drop your resume (PDF/DOCX/Image) or paste text.
-2.  **Analyze:** Wait a few seconds for OCR and AI Analysis.
-3.  **Review:** Check your ATS Score breakdown and critical issues.
-4.  **Optimize:** Click "AI Optimize" to rewrite specific sections.
+1.  **Upload:** Drag and drop your resume or paste text. Add a profile photo if desired.
+2.  **Analyze:** Wait a few seconds for Gemini to score your resume.
+3.  **Dashboard:** Review your score breakdown and "Critical Issues".
+4.  **Optimize:** 
+    - Click **"AI Optimize"** to open the studio.
+    - Use the **"Auto-Fix"** buttons for specific errors.
+    - Switch to **Preview Mode** to see the final layout.
+5.  **Export:** Download as PDF or DOCX.
 
 ## 🤝 Contributing
 

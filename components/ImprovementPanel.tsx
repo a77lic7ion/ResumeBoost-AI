@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { improveResumeContent } from '../services/geminiService';
-import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
+import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2, StopCircle } from 'lucide-react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { diffWords } from 'diff';
@@ -52,11 +53,12 @@ const TEMPLATES: Record<TemplateType, string> = {
 const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analysisResult, onClose, onUpdateOriginal }) => {
   const [improvedText, setImprovedText] = useState(originalText);
   const [loading, setLoading] = useState(false);
-  const [loadingStep, setLoadingStep] = useState('');
+  const [progress, setProgress] = useState(0); // 0 to 100
   const [copied, setCopied] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('diff');
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('modern');
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   // Track previous version for diffing
   const [previousVersion, setPreviousVersion] = useState(originalText);
@@ -67,37 +69,61 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     setViewMode('diff');
   }, [originalText]);
 
+  // Loading Progress Logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading) {
+        setProgress(0);
+        interval = setInterval(() => {
+            setProgress(prev => {
+                // Slower increment as it gets higher, never reaches 100 until complete
+                if (prev >= 90) return prev;
+                const increment = Math.max(1, (90 - prev) / 10);
+                return prev + increment;
+            });
+        }, 300);
+    } else {
+        setProgress(100);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
+
   const handleImprove = async (customPrompt?: string) => {
     const promptToUse = customPrompt || prompt;
     if (!promptToUse) return;
 
-    setLoading(true);
-    setLoadingStep('Analyzing Request...');
-    
-    // Simulate steps for better UX if the API is fast, or to show progress if slow
-    const steps = ['Reading Resume...', 'Applying Best Practices...', 'Structuring Markdown...', 'Finalizing Edits...'];
-    let stepIdx = 0;
-    const interval = setInterval(() => {
-        if (stepIdx < steps.length) {
-            setLoadingStep(steps[stepIdx]);
-            stepIdx++;
-        }
-    }, 2000);
+    // Cancel any previous request
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
 
+    setLoading(true);
     setPreviousVersion(improvedText); 
     
     try {
         const result = await improveResumeContent(improvedText, promptToUse);
+        
+        // If the user cancelled, result might be empty or we ignore it.
+        // Since getGenerativeModel doesn't directly take signal easily in all wrappers,
+        // we check if loading is still true before applying.
         setImprovedText(result);
         setViewMode('diff'); 
     } catch (e) {
         console.error(e);
-        alert("Optimization failed. Please try again.");
+        // Don't alert if it was just an abort (though here we can't easily distinguish without checking error type)
     } finally {
-        clearInterval(interval);
         setLoading(false);
-        setLoadingStep('');
+        abortControllerRef.current = null;
     }
+  };
+
+  const handleCancel = () => {
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
+    setLoading(false);
+    setProgress(0);
   };
 
   const handleCopy = () => {
@@ -194,18 +220,53 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
   const missingKeywords = analysisResult?.aiAnalysis?.missingKeywords || [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in-up">
-      <div className="glass-effect border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 rounded-2xl shadow-2xl w-full max-w-[95vw] h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in-up">
+      {/* Loading Overlay - Fixed to cover everything */}
+      {loading && (
+        <div className="fixed inset-0 z-[60] bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex items-center justify-center">
+            <div className="w-full max-w-md p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-300 mx-4">
+                <div className="relative">
+                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
+                    <Loader2 size={48} className="text-primary animate-spin relative z-10" />
+                </div>
+                
+                <div className="w-full space-y-2">
+                    <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <span>AI Optimization</span>
+                        <span>{Math.round(progress)}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div 
+                            className="h-full bg-primary transition-all duration-300 ease-out"
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                    <p className="text-center text-sm text-slate-500 dark:text-slate-400 pt-2">
+                        Applying best practices and formatting...
+                    </p>
+                </div>
+
+                <button 
+                    onClick={handleCancel}
+                    className="flex items-center gap-2 text-red-500 hover:text-red-600 font-medium text-sm transition-colors py-2 px-4 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                    <StopCircle size={16} /> Stop Generating
+                </button>
+            </div>
+        </div>
+      )}
+
+      <div className="glass-effect border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 rounded-none sm:rounded-2xl shadow-2xl w-full max-w-[95vw] h-full sm:h-[90vh] flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white/50 dark:bg-slate-900/50">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg text-primary">
                <Wand2 size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Resume Optimizer Studio</h2>
-              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Resume Optimizer Studio</h2>
+              <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                 <span>Powered by Gemini 2.5</span>
                 <span>•</span>
                 <span className={viewMode === 'edit' ? 'text-primary font-bold' : ''}>{viewMode === 'edit' ? 'Editing Mode' : 'Review Mode'}</span>
@@ -218,23 +279,71 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                     onUpdateOriginal(improvedText);
                     onClose();
                 }}
-                className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold shadow-lg shadow-green-600/20 transition-all hover:-translate-y-0.5"
+                disabled={loading}
+                className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold shadow-lg shadow-green-600/20 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <Check size={18} /> Apply Changes
             </button>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500 dark:text-slate-400">
+            <button onClick={onClose} disabled={loading} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500 dark:text-slate-400 disabled:opacity-50">
                 <X size={24} />
             </button>
           </div>
         </div>
 
         {/* Main Layout */}
-        <div className="flex-1 flex overflow-hidden flex-col md:flex-row">
+        <div className="flex-1 flex overflow-hidden flex-col md:flex-row relative">
             
             {/* Sidebar (Controls) */}
-            <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-700 flex flex-col bg-slate-50/50 dark:bg-slate-900/50">
+            <div className={`w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-700 flex flex-col bg-slate-50/50 dark:bg-slate-900/50 flex-shrink-0 ${loading ? 'pointer-events-none opacity-50' : ''}`}>
                 <div className="p-5 space-y-6 overflow-y-auto custom-scrollbar h-full">
                     
+                    {/* Visual Template Selector (Visible only in Preview) */}
+                    {viewMode === 'preview' && (
+                         <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
+                               <LayoutTemplate size={14} /> Resume Template
+                            </label>
+                            <div className="grid grid-cols-3 gap-2">
+                                <button 
+                                    onClick={() => setSelectedTemplate('modern')}
+                                    className={`flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all ${selectedTemplate === 'modern' ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
+                                >
+                                    <div className="w-full aspect-[3/4] bg-white border border-slate-200 p-1 flex flex-col gap-1 shadow-sm">
+                                        <div className="w-full h-2 bg-blue-500/20"></div>
+                                        <div className="w-2/3 h-1 bg-slate-200"></div>
+                                        <div className="w-full h-8 bg-slate-50"></div>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Modern</span>
+                                </button>
+                                <button 
+                                    onClick={() => setSelectedTemplate('classic')}
+                                    className={`flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all ${selectedTemplate === 'classic' ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
+                                >
+                                    <div className="w-full aspect-[3/4] bg-white border border-slate-200 p-1 flex flex-col gap-1 items-center shadow-sm">
+                                        <div className="w-3/4 h-2 bg-slate-800 mb-1"></div>
+                                        <div className="w-full h-px bg-slate-300 mb-1"></div>
+                                        <div className="w-full h-full bg-slate-50"></div>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Classic</span>
+                                </button>
+                                <button 
+                                    onClick={() => setSelectedTemplate('minimal')}
+                                    className={`flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all ${selectedTemplate === 'minimal' ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
+                                >
+                                    <div className="w-full aspect-[3/4] bg-white border border-slate-200 p-1 flex flex-col gap-1 shadow-sm">
+                                        <div className="w-1/2 h-3 bg-slate-900 mb-2"></div>
+                                        <div className="flex gap-1 h-full">
+                                            <div className="w-1 bg-orange-500 h-full"></div>
+                                            <div className="flex-1 bg-slate-50"></div>
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Minimal</span>
+                                </button>
+                            </div>
+                            <hr className="border-slate-200 dark:border-slate-700 mt-6" />
+                         </div>
+                    )}
+
                     {/* Detected Issues (Dynamic) */}
                     {(actionableIssues.length > 0 || missingKeywords.length > 0) && (
                       <div>
@@ -320,10 +429,10 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                     <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Download As</label>
                         <div className="grid grid-cols-2 gap-3">
-                            <button onClick={handleExportPDF} className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-xs font-bold text-slate-700 dark:text-slate-200">
+                            <button onClick={handleExportPDF} disabled={loading} className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-xs font-bold text-slate-700 dark:text-slate-200 disabled:opacity-50">
                                 <FileDown size={14} /> PDF
                             </button>
-                            <button onClick={handleExportDOCX} className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-xs font-bold text-slate-700 dark:text-slate-200">
+                            <button onClick={handleExportDOCX} disabled={loading} className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-xs font-bold text-slate-700 dark:text-slate-200 disabled:opacity-50">
                                 <Download size={14} /> DOCX
                             </button>
                         </div>
@@ -332,7 +441,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 min-w-0">
+            <div className={`flex-1 flex flex-col bg-white dark:bg-slate-900 min-w-0 transition-opacity ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
                 {/* Toolbar */}
                 <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-10">
                     <div className="flex bg-slate-200 dark:bg-slate-700 rounded-lg p-1">
@@ -357,20 +466,6 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {viewMode === 'preview' && (
-                            <div className="flex items-center gap-2">
-                                <LayoutTemplate size={16} className="text-slate-400"/>
-                                <select 
-                                    value={selectedTemplate}
-                                    onChange={(e) => setSelectedTemplate(e.target.value as TemplateType)}
-                                    className="bg-transparent text-sm font-medium text-slate-700 dark:text-slate-300 outline-none cursor-pointer"
-                                >
-                                    <option value="modern">Modern Professional</option>
-                                    <option value="classic">Classic Elegant</option>
-                                    <option value="minimal">Creative Minimal</option>
-                                </select>
-                            </div>
-                        )}
                         <div className="h-4 w-px bg-slate-300 dark:bg-slate-600"></div>
                         <button 
                             onClick={handleCopy}
@@ -384,23 +479,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
 
                 {/* Viewport */}
                 <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900/50 p-6 md:p-8 custom-scrollbar relative">
-                    {loading && (
-                        <div className="absolute inset-0 z-20 bg-white/50 dark:bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center">
-                            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
-                                <div className="relative">
-                                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
-                                    <Loader2 size={40} className="text-primary animate-spin relative z-10" />
-                                </div>
-                                <div className="text-center">
-                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1">AI is Working...</h3>
-                                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium min-w-[200px]">
-                                        {loadingStep}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
+                    
                     {viewMode === 'edit' && (
                         <textarea 
                             className="w-full h-full min-h-[600px] resize-none focus:outline-none text-sm leading-7 font-mono text-slate-800 dark:text-slate-200 bg-transparent p-4 border border-transparent focus:border-slate-200 dark:focus:border-slate-700 rounded-lg" 

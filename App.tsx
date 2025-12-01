@@ -4,6 +4,7 @@ import ResumeInput from './components/ResumeInput';
 import Dashboard from './components/Dashboard';
 import ImprovementPanel from './components/ImprovementPanel';
 import SettingsModal from './components/SettingsModal';
+import LandingFeatures from './components/LandingFeatures';
 import { calculateAtsScore } from './utils/atsLogic';
 import { analyzeWithGemini } from './services/geminiService';
 import { AnalysisResult, SavedSession } from './types';
@@ -160,19 +161,9 @@ const App: React.FC = () => {
                   />
                 </div>
                 
-                {/* Features Grid */}
-                <div className="max-w-5xl mx-auto mt-20 grid md:grid-cols-3 gap-8">
-                    {[
-                      { title: 'Smart Scoring', desc: '40+ point check against industry ATS standards.' },
-                      { title: 'AI Analysis', desc: 'Deep content critique using Google Gemini models.' },
-                      { title: 'Instant Rewrite', desc: 'Auto-optimize weak bullet points in seconds.' }
-                    ].map((f, i) => (
-                      <div key={i} className="glass-effect border border-slate-200 dark:border-slate-700/50 rounded-xl p-6 shadow-lg shadow-slate-200/50 dark:shadow-none">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{f.title}</h3>
-                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{f.desc}</p>
-                      </div>
-                    ))}
-                </div>
+                {/* New Features Section */}
+                <LandingFeatures />
+
               </div>
             ) : (
               <div className="animate-fade-in-up">

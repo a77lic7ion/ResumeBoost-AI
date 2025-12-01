@@ -21,13 +21,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
     }
   }, []);
 
+  const getEnvApiKey = () => {
+    // @ts-ignore - Vite handling
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+      // @ts-ignore
+      return import.meta.env.VITE_API_KEY;
+    }
+    // Standard process.env handling
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+      return process.env.API_KEY;
+    }
+    return undefined;
+  };
+
   const handleSave = () => {
     saveSettings({ apiKey });
     onClose();
   };
 
   const handleTestConnection = async () => {
-    const keyToTest = apiKey || process.env.API_KEY;
+    const keyToTest = apiKey || getEnvApiKey();
     if (!keyToTest) {
       setTestStatus('error');
       setErrorMessage("No API Key provided to test.");
@@ -49,7 +62,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
     }
   };
 
-  const isUsingEnv = !apiKey && !!process.env.API_KEY;
+  const envKey = getEnvApiKey();
+  const isUsingEnv = !apiKey && !!envKey;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in-up">

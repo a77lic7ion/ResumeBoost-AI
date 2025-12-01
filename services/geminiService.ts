@@ -7,13 +7,27 @@ const ANALYSIS_MODEL = "gemini-2.5-flash";
 const IMPROVEMENT_MODEL = "gemini-2.5-flash";
 const VISION_MODEL = "gemini-2.5-flash"; // Supports PDF and Images
 
+// Helper to safely access env vars in browser or node
+const getEnvApiKey = () => {
+  // @ts-ignore - Vite handling
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+    // @ts-ignore
+    return import.meta.env.VITE_API_KEY;
+  }
+  // Standard process.env handling (Next.js/CRA/Node)
+  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    return process.env.API_KEY;
+  }
+  return undefined;
+};
+
 // Helper to get the best available API Key (User Settings > Environment Variable)
 const getApiKey = (): string | undefined => {
   const settings = getSettings();
   if (settings.apiKey && settings.apiKey.trim().length > 0) {
     return settings.apiKey;
   }
-  return process.env.API_KEY;
+  return getEnvApiKey();
 };
 
 // Helper to initialize AI instance dynamically

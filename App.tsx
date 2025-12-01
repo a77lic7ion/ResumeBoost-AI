@@ -206,13 +206,11 @@ const App: React.FC = () => {
       <footer className="py-8 px-6 border-t border-gray-200 dark:border-zinc-800 bg-background-light dark:bg-background-dark">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
              <div className="flex items-center gap-2">
-                <span className="bg-primary/10 p-1.5 rounded-lg">
-                   <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
-                </span>
+                <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
                 <span className="font-bold text-gray-900 dark:text-white">ResumeBoost AI</span>
              </div>
              <p className="text-sm text-gray-500 dark:text-gray-400">
-                © {new Date().getFullYear()} ResumeBoost AI. Powered by Google Gemini.
+                Created by AfflictedAI
              </p>
              <div className="flex gap-4">
                 <a href="#" className="text-gray-500 hover:text-primary transition-colors"><Github size={20} /></a>

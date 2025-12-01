@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { improveResumeContent } from '../services/geminiService';
-import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2, StopCircle, Lightbulb, PenTool, ChevronDown } from 'lucide-react';
+import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2, StopCircle, Lightbulb, PenTool, ChevronDown, PlusCircle } from 'lucide-react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { diffWords } from 'diff';
-import { AnalysisResult, IssueSeverity } from '../types';
+import { AnalysisResult, IssueSeverity, Issue } from '../types';
+import { calculateAtsScore } from '../utils/atsLogic';
 
 interface ImprovementPanelProps {
   originalText: string;
@@ -22,40 +23,49 @@ const TEMPLATES: Record<TemplateType, string> = {
   modern: `
     font-family: 'Sora', 'Inter', sans-serif;
     color: #334155;
-    .profile-photo { float: left; width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-right: 20px; border: 3px solid #e2e8f0; }
-    .header-container { display: flex; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; }
-    h1 { color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em; font-size: 2em; margin: 0; }
-    h2 { color: #0f172a; margin-top: 2rem; font-size: 1.25em; font-weight: 700; border-left: 4px solid #cbd5e1; padding-left: 1rem; }
-    h3 { color: #475569; font-weight: 600; margin-top: 1.5rem; }
-    p { line-height: 1.6; margin-bottom: 1rem; }
-    ul { padding-left: 1.5rem; }
-    li { margin-bottom: 0.5rem; position: relative; }
+    .resume-container { display: flex; flex-direction: column; gap: 20px; }
+    .header-container { display: flex; align-items: center; gap: 24px; padding-bottom: 24px; border-bottom: 2px solid #e2e8f0; }
+    .header-content { flex: 1; }
+    .profile-photo { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); flex-shrink: 0; }
+    h1 { color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em; font-size: 2.2em; margin: 0 0 8px 0; line-height: 1.1; }
+    .contact-info { font-size: 0.9em; color: #64748b; margin-bottom: 0; }
+    h2 { color: #0f172a; margin-top: 24px; font-size: 1.25em; font-weight: 700; border-left: 4px solid #2563eb; padding-left: 12px; display: flex; align-items: center; text-transform: uppercase; letter-spacing: 0.05em; }
+    h3 { color: #475569; font-weight: 600; font-size: 1.1em; margin-top: 16px; margin-bottom: 4px; }
+    p { line-height: 1.6; margin-bottom: 8px; color: #475569; }
+    ul { padding-left: 1.2rem; margin-top: 4px; }
+    li { margin-bottom: 6px; position: relative; line-height: 1.5; color: #334155; }
     li::marker { color: #2563eb; }
-    .clearfix::after { content: ""; display: table; clear: both; }
+    strong { color: #0f172a; font-weight: 700; }
   `,
   classic: `
-    font-family: 'Times New Roman', serif;
+    font-family: 'Georgia', 'Times New Roman', serif;
     color: #1a1a1a;
-    .profile-photo { display: block; width: 100px; height: 100px; margin: 0 auto 15px auto; border-radius: 5px; object-fit: cover; border: 1px solid #000; }
-    .header-container { text-align: center; border-bottom: 1px solid #000; padding-bottom: 1rem; margin-bottom: 1rem; }
-    h1 { text-align: center; color: #000; font-size: 2.5em; margin-bottom: 0.5rem; }
-    h2 { text-transform: uppercase; border-bottom: 1px solid #666; font-size: 1.2em; margin-top: 2em; padding-bottom: 5px; }
-    h3 { font-style: italic; font-weight: bold; margin-top: 1em; }
-    p { text-align: justify; line-height: 1.5; }
-    ul { padding-left: 20px; }
-    .clearfix::after { content: ""; display: table; clear: both; }
+    .resume-container { max-width: 100%; }
+    .header-container { text-align: center; border-bottom: 1px solid #000; padding-bottom: 20px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; }
+    .profile-photo { width: 100px; height: 100px; margin-bottom: 15px; border-radius: 4px; object-fit: cover; border: 1px solid #ccc; padding: 3px; background: white; }
+    h1 { font-size: 2.4em; margin: 0 0 10px 0; color: #000; font-weight: normal; font-family: 'Times New Roman', serif; }
+    .contact-info { font-style: italic; color: #444; font-size: 1em; }
+    h2 { text-transform: uppercase; border-bottom: 1px solid #666; font-size: 1.1em; margin-top: 2em; padding-bottom: 5px; font-weight: bold; letter-spacing: 1px; }
+    h3 { font-weight: bold; margin-top: 1.2em; font-size: 1.05em; color: #222; }
+    p { text-align: justify; line-height: 1.6; margin-bottom: 0.8em; }
+    ul { padding-left: 20px; margin-top: 0.5em; }
+    li { margin-bottom: 0.4em; }
   `,
   minimal: `
-    font-family: 'Arial', sans-serif;
-    color: #111;
-    .profile-photo { float: right; width: 80px; height: 80px; border-radius: 4px; object-fit: cover; margin-left: 20px; filter: grayscale(100%); }
-    h1 { font-weight: 900; font-size: 3em; letter-spacing: -1px; line-height: 1; margin-bottom: 2rem; }
-    h2 { font-weight: 800; font-size: 1em; text-transform: uppercase; margin-top: 3rem; margin-bottom: 1rem; letter-spacing: 1px; }
-    h3 { font-weight: 700; font-size: 1em; margin-bottom: 0.5rem; }
-    p, li { font-size: 0.95em; line-height: 1.7; color: #444; }
+    font-family: 'Helvetica Neue', 'Arial', sans-serif;
+    color: #222;
+    .resume-container { display: block; }
+    .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3rem; border-bottom: 1px solid #eee; padding-bottom: 2rem; }
+    .header-content { flex: 1; padding-right: 20px; }
+    .profile-photo { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; filter: grayscale(100%); flex-shrink: 0; }
+    h1 { font-weight: 800; font-size: 2.8em; letter-spacing: -1px; line-height: 1; margin: 0 0 10px 0; color: #000; }
+    .contact-info { font-size: 0.9em; color: #666; font-weight: 500; }
+    h2 { font-weight: 700; font-size: 0.9em; text-transform: uppercase; margin-top: 2.5rem; margin-bottom: 1rem; letter-spacing: 1.5px; color: #888; }
+    h3 { font-weight: 700; font-size: 1.1em; margin-bottom: 0.2rem; color: #000; }
+    p, li { font-size: 0.95em; line-height: 1.6; color: #444; }
     ul { list-style: none; padding: 0; }
-    li:before { content: "•"; color: #2563EB; font-weight: bold; display: inline-block; width: 1em; margin-left: -1em; }
-    .clearfix::after { content: ""; display: table; clear: both; }
+    li { padding-left: 1.2em; text-indent: -1.2em; margin-bottom: 0.5em; }
+    li:before { content: "—"; color: #999; margin-right: 0.5em; }
   `
 };
 
@@ -70,14 +80,30 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
   const [longRunning, setLongRunning] = useState(false);
   const [showIssuesList, setShowIssuesList] = useState(false);
   
+  // Real-time Analysis State
+  const [localIssues, setLocalIssues] = useState<Issue[]>([]);
+  const [quickFixValue, setQuickFixValue] = useState('');
+  const [activeFixId, setActiveFixId] = useState<string | null>(null);
+  
   const abortControllerRef = useRef<AbortController | null>(null);
   const [previousVersion, setPreviousVersion] = useState(originalText);
 
-  // Sync initial text
+  // Sync initial text and set initial issues
   useEffect(() => {
     if (!improvedText) setImprovedText(originalText);
+    const { issues } = calculateAtsScore(originalText);
+    setLocalIssues(issues);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [originalText]);
+
+  // Real-time re-analysis when text changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        const { issues } = calculateAtsScore(improvedText);
+        setLocalIssues(issues);
+    }, 500); // Debounce for performance
+    return () => clearTimeout(timer);
+  }, [improvedText]);
 
   // Handle Progress Bar
   useEffect(() => {
@@ -87,18 +113,15 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
         setLongRunning(false);
         interval = setInterval(() => {
             setProgress(prev => {
-                // If we get stuck high up, just oscillate slightly or stop incrementing to avoid "hanging" feel
                 if (prev >= 95) {
                     setLongRunning(true);
                     return prev < 98 ? prev + 0.1 : 98;
                 }
-                
                 let increment = 0;
                 if (prev < 30) increment = Math.random() * 8 + 2;
                 else if (prev < 60) increment = Math.random() * 3 + 1;
                 else if (prev < 80) increment = 0.8;
                 else increment = 0.2;
-                
                 return prev + increment;
             });
         }, 400);
@@ -124,19 +147,13 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     
     try {
         const result = await improveResumeContent(improvedText, promptToUse);
-        
-        // Critical: Check if this specific request was aborted
-        if (currentSignal.aborted) {
-            console.log('Request aborted, ignoring result');
-            return;
-        }
-        
+        if (currentSignal.aborted) return;
         setImprovedText(result);
         if (!customPrompt) setViewMode('diff'); 
     } catch (e) {
         if (currentSignal.aborted) return;
         console.error(e);
-        alert("Optimization failed. Please check your API key and try again.");
+        alert("Optimization failed. Please check your API key.");
     } finally {
         if (!currentSignal.aborted) {
             setLoading(false);
@@ -145,12 +162,42 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     }
   };
 
+  const handleManualFix = (issueId: string, value: string) => {
+    if (!value.trim()) return;
+    
+    // Simple injection logic for basic fields
+    let newText = improvedText;
+    const headerEndIndex = improvedText.indexOf('##'); // Assuming first section starts with ##
+    
+    if (issueId === 'missing-email' || issueId === 'missing-phone' || issueId === 'missing-linkedin') {
+        // Try to inject in the first few lines
+        const lines = newText.split('\n');
+        // Find the title/name line (usually first H1 #)
+        const nameLineIndex = lines.findIndex(l => l.startsWith('# '));
+        
+        if (nameLineIndex !== -1 && nameLineIndex < 5) {
+            // Inject after name
+            lines.splice(nameLineIndex + 1, 0, `**${value}**`);
+            newText = lines.join('\n');
+        } else {
+            // Prepend to top
+            newText = `${value}\n\n${improvedText}`;
+        }
+    } else if (issueId.includes('missing-section')) {
+        // Append section to end
+        newText = `${improvedText}\n\n## ${value}\n- [Add details here]`;
+    }
+
+    setImprovedText(newText);
+    setActiveFixId(null);
+    setQuickFixValue('');
+  };
+
   const handleCancel = () => {
     if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
     }
-    // Force reset UI state immediately
     setLoading(false);
     setProgress(0);
     setLongRunning(false);
@@ -165,16 +212,23 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
   const getRenderedContent = () => {
      const cleanHtml = DOMPurify.sanitize(marked.parse(improvedText) as string);
      if (profileImage) {
+        // We use a container to manage flex layout in css
         return `
-          <div class="clearfix">
-            <img src="${profileImage}" class="profile-photo" alt="Profile Photo" />
+          <div class="resume-container">
+            <div class="header-container">
+                <img src="${profileImage}" class="profile-photo" alt="Profile" />
+                <div class="header-content">
+                     ${cleanHtml.split('<h2')[0]} <!-- Hacky: Extract header part before first H2 -->
+                </div>
+            </div>
             <div class="resume-body">
-                ${cleanHtml}
+                <h2${cleanHtml.split('<h2').slice(1).join('<h2')} <!-- Remainder -->
             </div>
           </div>
         `;
      }
-     return cleanHtml;
+     // If no image, normal render but wrapped
+     return `<div class="resume-container">${cleanHtml}</div>`;
   };
 
   const handleExportPDF = () => {
@@ -217,8 +271,8 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     );
   };
 
-  // --- Dynamic Suggestions Logic ---
-  const criticalIssues = analysisResult?.issues.filter(i => i.severity === IssueSeverity.CRITICAL || i.severity === IssueSeverity.IMPORTANT) || [];
+  // Filter Critical Issues from LOCAL analysis (Real-time)
+  const criticalIssues = localIssues.filter(i => i.severity === IssueSeverity.CRITICAL || i.severity === IssueSeverity.IMPORTANT);
   
   const getSmartSuggestions = () => {
     const suggestions = [];
@@ -230,6 +284,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
       icon: <Sparkles size={14} className="text-purple-500" />
     });
 
+    // Use initial analysis for these general suggestions as they are qualitative
     if (analysisResult?.score) {
       const { impact, keywords, content } = analysisResult.score.breakdown;
 
@@ -258,7 +313,6 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
          });
       }
     }
-    
     return suggestions;
   };
 
@@ -342,7 +396,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                          </div>
                     )}
 
-                    {/* Sidebar Critical Issues List (Visible only if inline is hidden or on mobile) */}
+                    {/* Sidebar Critical Issues List (Mobile only, or duplicate list) */}
                     {criticalIssues.length > 0 && !showIssuesList && (
                       <div className="animate-fade-in-up md:hidden">
                         <label className="block text-xs font-bold uppercase tracking-wider text-red-500 dark:text-red-400 mb-3 flex items-center gap-2">
@@ -352,12 +406,6 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                           {criticalIssues.map(issue => (
                              <div key={issue.id} className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 p-3 rounded-lg">
                                <p className="text-xs text-red-700 dark:text-red-300 font-medium mb-2">{issue.message}</p>
-                               <button 
-                                 onClick={() => handleImprove(`Fix this specific issue in the resume: ${issue.message}. ${issue.remediation}`)}
-                                 className="w-full py-1.5 bg-white dark:bg-zinc-800 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-bold rounded hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex items-center justify-center gap-1"
-                               >
-                                 <PenTool size={12} /> Fix with AI
-                               </button>
                              </div>
                           ))}
                         </div>
@@ -425,7 +473,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                     </div>
                 </div>
 
-                {/* Inline Critical Alert Banner (Updated) */}
+                {/* Inline Critical Alert Banner (With Add Field Options) */}
                 {viewMode === 'edit' && criticalIssues.length > 0 && (
                    <div className="bg-red-50 dark:bg-red-900/10 border-b border-red-200 dark:border-red-900/30">
                         <div className="px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors" onClick={() => setShowIssuesList(!showIssuesList)}>
@@ -446,7 +494,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                         {showIssuesList && (
                             <div className="px-6 pb-4 space-y-2 animate-fade-in-up bg-red-50/50 dark:bg-red-900/10">
                                 {criticalIssues.map(issue => (
-                                    <div key={issue.id} className="flex flex-col sm:flex-row items-start gap-3 p-3 bg-white dark:bg-zinc-800 rounded-lg border border-red-100 dark:border-red-900/30 shadow-sm">
+                                    <div key={issue.id} className="flex flex-col md:flex-row items-start md:items-center gap-3 p-3 bg-white dark:bg-zinc-800 rounded-lg border border-red-100 dark:border-red-900/30 shadow-sm">
                                         <div className="flex-1">
                                              <div className="flex items-center gap-2 mb-1">
                                                 <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 uppercase tracking-wider">{issue.severity}</span>
@@ -454,12 +502,51 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                                              </div>
                                              <p className="text-xs text-gray-600 dark:text-gray-400">{issue.remediation}</p>
                                         </div>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); handleImprove(`Fix this issue: ${issue.message}. ${issue.remediation}`); }}
-                                            className="text-[10px] font-bold bg-primary/10 hover:bg-primary/20 text-primary px-3 py-2 rounded transition-colors flex items-center gap-1 whitespace-nowrap"
-                                        >
-                                            <Wand2 size={12} /> Auto-Fix
-                                        </button>
+                                        
+                                        {/* Action Area: Input Field or AI Fix */}
+                                        {(issue.id.includes('missing-email') || issue.id.includes('missing-phone') || issue.id.includes('missing-linkedin')) ? (
+                                            <div className="flex items-center gap-2 w-full md:w-auto mt-2 md:mt-0">
+                                                {activeFixId === issue.id ? (
+                                                     <div className="flex items-center gap-2 w-full">
+                                                         <input 
+                                                            autoFocus
+                                                            type="text" 
+                                                            placeholder={`Enter ${issue.id.split('-')[1]}...`}
+                                                            className="flex-1 min-w-[150px] px-2 py-1.5 text-xs border border-gray-300 dark:border-zinc-700 rounded bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
+                                                            value={quickFixValue}
+                                                            onChange={(e) => setQuickFixValue(e.target.value)}
+                                                            onKeyDown={(e) => e.key === 'Enter' && handleManualFix(issue.id, quickFixValue)}
+                                                         />
+                                                         <button 
+                                                            onClick={() => handleManualFix(issue.id, quickFixValue)}
+                                                            className="p-1.5 bg-green-500 text-white rounded hover:bg-green-600"
+                                                         >
+                                                             <Check size={12} />
+                                                         </button>
+                                                         <button 
+                                                            onClick={() => setActiveFixId(null)}
+                                                            className="p-1.5 bg-gray-200 dark:bg-zinc-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-300"
+                                                         >
+                                                             <X size={12} />
+                                                         </button>
+                                                     </div>
+                                                ) : (
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); setActiveFixId(issue.id); setQuickFixValue(''); }}
+                                                        className="w-full md:w-auto text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 text-blue-600 dark:text-blue-300 px-3 py-2 rounded transition-colors flex items-center justify-center gap-1 whitespace-nowrap"
+                                                    >
+                                                        <PlusCircle size={12} /> Add {issue.id.split('-')[1]}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); handleImprove(`Fix this issue: ${issue.message}. ${issue.remediation}`); }}
+                                                className="w-full md:w-auto mt-2 md:mt-0 text-[10px] font-bold bg-primary/10 hover:bg-primary/20 text-primary px-3 py-2 rounded transition-colors flex items-center justify-center gap-1 whitespace-nowrap"
+                                            >
+                                                <Wand2 size={12} /> Auto-Fix
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>

@@ -8,7 +8,7 @@ const PricingSection: React.FC = () => {
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Pricing & Plans</h2>
                 <p className="mt-2 text-gray-600 dark:text-gray-400">Choose the plan that's right for you.</p>
             </div>
-            <div className="grid lg:grid-cols-2 gap-8 max-w-4xl mx-auto mt-12 justify-center">
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mt-12 justify-center">
                 <div className="bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-black/20 border border-gray-200 dark:border-zinc-800 flex flex-col">
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Review Standard</h3>
                     <p className="text-sm mt-1 text-gray-500 dark:text-gray-400">Quick 1-hour access</p>

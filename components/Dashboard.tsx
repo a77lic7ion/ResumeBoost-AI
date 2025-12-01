@@ -1,14 +1,15 @@
 import React from 'react';
 import { AnalysisResult, Issue, IssueSeverity } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { CheckCircle, AlertTriangle, XCircle, Wand2, ChevronRight } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Wand2, Save } from 'lucide-react';
 
 interface DashboardProps {
   analysis: AnalysisResult;
   onImproveClick: () => void;
+  onSave: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick }) => {
+const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave }) => {
   const { score, issues, aiAnalysis } = analysis;
 
   const data = [
@@ -36,6 +37,22 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick }) => {
   return (
     <div className="space-y-8 pb-12">
       
+      {/* Action Header */}
+      <div className="flex justify-between items-center bg-white/50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+         <div className="flex flex-col">
+            <span className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Dashboard</span>
+            <span className="text-slate-900 dark:text-white font-semibold">Resume Analysis Results</span>
+         </div>
+         <div className="flex gap-3">
+             <button 
+                onClick={onSave}
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium hover:text-primary transition-colors shadow-sm"
+             >
+                <Save size={18} /> Save Session
+             </button>
+         </div>
+      </div>
+
       {/* Top Section: Score & Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         

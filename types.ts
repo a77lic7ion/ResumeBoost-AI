@@ -47,4 +47,12 @@ export interface AnalysisResult {
   };
 }
 
+export interface SavedSession {
+  id: string;
+  name: string;
+  timestamp: number;
+  resumeText: string;
+  analysisResult: AnalysisResult;
+}
+
 export type ProcessingStatus = 'idle' | 'parsing' | 'scoring' | 'ai-analyzing' | 'complete' | 'error';

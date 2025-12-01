@@ -4,8 +4,9 @@ import Dashboard from './components/Dashboard';
 import ImprovementPanel from './components/ImprovementPanel';
 import { calculateAtsScore } from './utils/atsLogic';
 import { analyzeWithGemini } from './services/geminiService';
-import { AnalysisResult } from './types';
+import { AnalysisResult, SavedSession } from './types';
 import { FileText, Github, Moon, Sun } from 'lucide-react';
+import { saveSession, generateId } from './utils/storage';
 
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'upload' | 'results'>('upload');
@@ -14,6 +15,9 @@ const App: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showImprovementPanel, setShowImprovementPanel] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  
+  // Track current session ID for updates
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   // Initialize theme based on system preference or default to dark (modern look)
   useEffect(() => {
@@ -34,6 +38,7 @@ const App: React.FC = () => {
   const handleAnalyze = async (text: string) => {
     setIsProcessing(true);
     setResumeText(text);
+    setCurrentSessionId(generateId()); // New session
 
     // 1. Local Algo Scoring
     const { score, issues } = calculateAtsScore(text);
@@ -49,6 +54,44 @@ const App: React.FC = () => {
 
     setIsProcessing(false);
     setCurrentStep('results');
+  };
+
+  const handleLoadSession = (session: SavedSession) => {
+    setResumeText(session.resumeText);
+    setAnalysisResult(session.analysisResult);
+    setCurrentSessionId(session.id);
+    setCurrentStep('results');
+  };
+
+  const handleSave = () => {
+    if (!analysisResult || !resumeText || !currentSessionId) return;
+    
+    // Use the first line or AI summary as the name, fallbacks to "Resume"
+    let name = "Untitled Resume";
+    if (analysisResult.aiAnalysis?.summary) {
+        // Take first 5 words of summary
+        name = analysisResult.aiAnalysis.summary.split(' ').slice(0, 5).join(' ') + '...';
+    } else {
+        name = `Resume - ${new Date().toLocaleDateString()}`;
+    }
+
+    const session: SavedSession = {
+        id: currentSessionId,
+        name: name,
+        timestamp: Date.now(),
+        resumeText: resumeText,
+        analysisResult: analysisResult
+    };
+
+    saveSession(session);
+    alert("Session saved successfully!");
+  };
+
+  const handleUpdateOriginal = (newText: string) => {
+      setResumeText(newText);
+      // Re-run standard checks locally, but keep AI data to avoid cost/delay unless explicit re-analyze requested
+      const { score, issues } = calculateAtsScore(newText);
+      setAnalysisResult(prev => prev ? { ...prev, score, issues } : null);
   };
 
   return (
@@ -99,8 +142,12 @@ const App: React.FC = () => {
                   </p>
                 </section>
                 
-                <div className="max-w-4xl mx-auto">
-                  <ResumeInput onAnalyze={handleAnalyze} isProcessing={isProcessing} />
+                <div className="max-w-6xl mx-auto">
+                  <ResumeInput 
+                    onAnalyze={handleAnalyze} 
+                    onLoadSession={handleLoadSession}
+                    isProcessing={isProcessing} 
+                  />
                 </div>
                 
                 {/* Features Grid */}
@@ -132,6 +179,7 @@ const App: React.FC = () => {
                   <Dashboard 
                     analysis={analysisResult} 
                     onImproveClick={() => setShowImprovementPanel(true)} 
+                    onSave={handleSave}
                   />
                 )}
               </div>
@@ -143,7 +191,8 @@ const App: React.FC = () => {
         {showImprovementPanel && (
           <ImprovementPanel 
             originalText={resumeText} 
-            onClose={() => setShowImprovementPanel(false)} 
+            onClose={() => setShowImprovementPanel(false)}
+            onUpdateOriginal={handleUpdateOriginal}
           />
         )}
 

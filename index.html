@@ -70,6 +70,23 @@
         background: rgba(15, 23, 42, 0.6);
         border-color: rgba(51, 65, 85, 0.5);
       }
+
+      /* Markdown Content Styles */
+      .prose h1, .prose h2, .prose h3 {
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      .prose h1 { font-size: 1.75em; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.2em; }
+      .prose h2 { font-size: 1.5em; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2em; }
+      .prose h3 { font-size: 1.25em; }
+      .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+      .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
+      .prose p { margin-bottom: 1em; line-height: 1.6; }
+      .prose strong { font-weight: 700; }
+      
+      .dark .prose h1, .dark .prose h2 { border-color: #334155; }
     </style>
   <script type="importmap">
 {
@@ -80,7 +97,10 @@
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "mammoth": "https://cdn.jsdelivr.net/npm/mammoth@1.6.0/+esm"
+    "mammoth": "https://cdn.jsdelivr.net/npm/mammoth@1.6.0/+esm",
+    "marked": "https://cdn.jsdelivr.net/npm/marked@12.0.0/+esm",
+    "dompurify": "https://cdn.jsdelivr.net/npm/dompurify@3.0.9/+esm",
+    "diff": "https://cdn.jsdelivr.net/npm/diff@5.1.0/+esm"
   }
 }
 </script>

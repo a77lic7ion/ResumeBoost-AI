@@ -99,11 +99,12 @@ export const improveResumeContent = async (originalText: string, specificInstruc
       ${originalText.slice(0, 12000)}
       
       OUTPUT REQUIREMENTS:
+      - Use standard Markdown formatting (Headers #, ##, Bullets -, etc).
       - Use strong action verbs.
       - Quantify achievements where numbers are present or can be inferred.
-      - Maintain a clean, professional format (Markdown).
+      - Maintain a clean, professional format.
       - Do NOT include placeholders like [Insert Number] unless absolutely necessary.
-      - Return ONLY the rewritten text.`,
+      - Return ONLY the rewritten text/markdown. Do not add conversational filler.`,
       config: {
         maxOutputTokens: 4000,
       }

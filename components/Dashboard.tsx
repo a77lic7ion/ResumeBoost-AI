@@ -80,7 +80,8 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
         {/* Chart */}
         <div className="lg:col-span-2 glass-effect border border-slate-200 dark:border-slate-700/80 rounded-2xl p-8 shadow-lg dark:shadow-black/20 flex flex-col">
           <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Score Breakdown</h3>
-          <div className="flex-1 min-h-[200px]">
+          {/* Explicit height to fix Recharts warning */}
+          <div className="w-full h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                 <XAxis type="number" domain={[0, 25]} hide />

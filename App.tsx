@@ -200,7 +200,7 @@ const App: React.FC = () => {
         <footer className="py-8 px-4 sm:px-6 lg:px-8 mt-auto border-t border-slate-200 dark:border-slate-800">
           <div className="container mx-auto max-w-7xl text-center">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              © {new Date().getFullYear()} ResumeBoost AI. Powered by Google Gemini.
+              © {new Date().getFullYear()} @Created by AfflictedAI. Powered by Google Gemini.
             </p>
           </div>
         </footer>

@@ -94,7 +94,8 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         // Attempt to extract Image (Profile Picture)
         try {
             const htmlResult = await mammoth.convertToHtml({ arrayBuffer });
-            const imgMatch = htmlResult.value.match(/<img[^>]+src="([^">]+)"/);
+            // Look for any standard img tag with base64 src
+            const imgMatch = htmlResult.value.match(/<img[^>]+src=["']([^"']+)["']/);
             if (imgMatch && imgMatch[1]) {
                 setExtractedImage(imgMatch[1]);
             }
@@ -191,11 +192,11 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
           </div>
 
           {extractedImage && (
-             <div className="mt-4 flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-300">
+             <div className="mt-4 flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-300 animate-fade-in-up">
                  <div className="w-8 h-8 rounded-full overflow-hidden border border-green-300 dark:border-green-700 flex-shrink-0">
                      <img src={extractedImage} alt="Extracted" className="w-full h-full object-cover" />
                  </div>
-                 <span>Image found in document! It will be added to your new resume.</span>
+                 <span>Image found in document! It will be included in the preview.</span>
              </div>
           )}
 

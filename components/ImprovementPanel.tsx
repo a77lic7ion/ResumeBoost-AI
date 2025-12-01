@@ -43,6 +43,7 @@ const TEMPLATES: Record<TemplateType, string> = {
     h3 { font-style: italic; font-weight: bold; margin-top: 1em; }
     p { text-align: justify; line-height: 1.5; }
     ul { padding-left: 20px; }
+    .clearfix::after { content: ""; display: table; clear: both; }
   `,
   minimal: `
     font-family: 'Arial', sans-serif;
@@ -77,26 +78,28 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     setViewMode('diff');
   }, [originalText]);
 
-  // Loading Progress Logic - FIX for stall at 90%
+  // Loading Progress Logic - Adjusted to prevent stalling
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (loading) {
         setProgress(0);
         interval = setInterval(() => {
             setProgress(prev => {
-                // If we are close to the end, move extremely slowly to simulate work without stalling completely
-                if (prev >= 98) return prev; 
+                // Never stop completely, just asymptote to 99.9%
+                if (prev >= 99) return 99;
                 
                 let increment = 0;
-                if (prev < 60) {
-                    increment = Math.random() * 5 + 2; // Fast start
-                } else if (prev < 85) {
-                    increment = Math.random() * 2 + 1; // Slow down
+                if (prev < 50) {
+                    increment = Math.random() * 5 + 3; // Fast initial
+                } else if (prev < 80) {
+                    increment = Math.random() * 2 + 1; // Steady
+                } else if (prev < 95) {
+                    increment = 0.5; // Slowing
                 } else {
-                    increment = 0.2; // Crawl to end
+                    increment = 0.05; // Crawling but moving
                 }
                 
-                return Math.min(prev + increment, 99);
+                return Math.min(prev + increment, 99.9);
             });
         }, 500);
     } else {

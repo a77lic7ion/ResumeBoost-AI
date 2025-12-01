@@ -246,33 +246,39 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
   };
 
   const handleExportDOCX = () => {
-    // Correct way to export to DOCX compatible HTML (MHTML style wrapper)
     const content = getRenderedContent();
     const styles = TEMPLATES[selectedTemplate];
     
-    const preHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head><meta charset='utf-8'><title>Resume</title>
-    <style>
-      ${styles}
-      /* Ensure Word understands spacing */
-      body { font-family: sans-serif; }
-    </style>
-    </head><body>`;
-    
-    const postHtml = "</body></html>";
-    const html = preHtml + content + postHtml;
+    // Create a complete HTML document structure to satisfy Google Docs/Word
+    const fullHtml = `<!DOCTYPE html>
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head>
+      <meta charset='utf-8'>
+      <title>Resume</title>
+      <style>
+        body { font-family: sans-serif; }
+        ${styles}
+      </style>
+    </head>
+    <body>
+      ${content}
+    </body>
+    </html>`;
 
-    const blob = new Blob(['\ufeff', html], {
-        type: 'application/msword'
+    // Use Blob with HTML MIME type (Word handles HTML files well)
+    // Adding the Byte Order Mark (\ufeff) is crucial for UTF-8 encoding
+    const blob = new Blob(['\ufeff', fullHtml], {
+        type: 'application/msword' // Using .doc MIME type often triggers Word's HTML import more reliably than .docx for raw HTML
     });
     
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Resume_Optimized.doc`; // .doc is often safer for HTML-based exports than .docx for Google Docs
+    link.download = `Resume_Optimized.doc`; // .doc is often safer for HTML-based exports to be opened by Google Docs
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const renderDiff = () => {

@@ -82,7 +82,8 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
   };
 
   const validateLinkedin = (url: string) => {
-      const regex = /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[\w-]+\/?$/;
+      // Allow urls with query params, e.g. ?trk=contact-info
+      const regex = /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[A-Za-z0-9._%-]+.*$/;
       return regex.test(url);
   };
 

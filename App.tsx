@@ -168,6 +168,10 @@ const App: React.FC = () => {
                                 className="w-full max-w-md mx-auto drop-shadow-2xl object-contain hover:scale-105 transition-transform duration-500" 
                                 src="/logo.png"
                                 crossOrigin="anonymous"
+                                onError={(e) => {
+                                    // Hide if failed
+                                    e.currentTarget.style.opacity = '0.5';
+                                }}
                              />
                         </div>
                     </div>

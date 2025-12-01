@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileText, Clipboard, AlertCircle, FileType, Clock, Trash2, ArrowRight } from 'lucide-react';
 import * as mammoth from 'mammoth';
@@ -6,7 +7,7 @@ import { getSessions, deleteSession } from '../utils/storage';
 import { SavedSession } from '../types';
 
 interface ResumeInputProps {
-  onAnalyze: (text: string) => void;
+  onAnalyze: (text: string, image?: string) => void;
   onLoadSession: (session: SavedSession) => void;
   isProcessing: boolean;
 }
@@ -15,6 +16,7 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
   const [text, setText] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [extractedImage, setExtractedImage] = useState<string | undefined>(undefined);
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,6 +71,7 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
 
   const processFile = async (file: File) => {
     setExtracting(true);
+    setExtractedImage(undefined);
     try {
       if (file.type === 'text/plain' || file.name.endsWith('.md') || file.name.endsWith('.txt')) {
         const reader = new FileReader();
@@ -83,8 +86,22 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         file.name.endsWith('.docx')
       ) {
         const arrayBuffer = await file.arrayBuffer();
+        
+        // Extract Text
         const result = await mammoth.extractRawText({ arrayBuffer });
         setText(result.value);
+
+        // Attempt to extract Image (Profile Picture)
+        try {
+            const htmlResult = await mammoth.convertToHtml({ arrayBuffer });
+            const imgMatch = htmlResult.value.match(/<img[^>]+src="([^">]+)"/);
+            if (imgMatch && imgMatch[1]) {
+                setExtractedImage(imgMatch[1]);
+            }
+        } catch (imgError) {
+            console.warn("Could not extract image from DOCX", imgError);
+        }
+
         setExtracting(false);
       } 
       else if (
@@ -94,6 +111,7 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         const base64 = await fileToBase64(file);
         const extracted = await extractTextFromMultimodal(base64, file.type);
         setText(extracted);
+        // Note: Extracting profile image from PDF/Image via Gemini Vision is complex and not implemented here.
         setExtracting(false);
       } 
       else {
@@ -172,13 +190,22 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
               />
           </div>
 
+          {extractedImage && (
+             <div className="mt-4 flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-300">
+                 <div className="w-8 h-8 rounded-full overflow-hidden border border-green-300 dark:border-green-700 flex-shrink-0">
+                     <img src={extractedImage} alt="Extracted" className="w-full h-full object-cover" />
+                 </div>
+                 <span>Image found in document! It will be added to your new resume.</span>
+             </div>
+          )}
+
           <div className="mt-4 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <AlertCircle size={14} className="shrink-0" />
               <p>Your data is processed locally and via secure AI API. It is not stored on our servers.</p>
           </div>
 
           <button
-              onClick={() => onAnalyze(text)}
+              onClick={() => onAnalyze(text, extractedImage)}
               disabled={text.length < 50 || isLoading}
               className={`mt-8 w-full py-4 px-6 rounded-xl font-bold text-lg shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0
                   ${text.length < 50 || isLoading 
@@ -245,6 +272,11 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
                         {new Date(session.timestamp).toLocaleDateString()}
                      </span>
                   </div>
+                  {session.profileImage && (
+                      <div className="absolute top-4 right-8 w-6 h-6 rounded-full border border-slate-200 overflow-hidden">
+                          <img src={session.profileImage} className="w-full h-full object-cover" alt="" />
+                      </div>
+                  )}
                   <div className="absolute inset-0 border-2 border-primary rounded-xl opacity-0 scale-95 group-hover:scale-100 group-hover:opacity-100 pointer-events-none transition-all duration-300"></div>
                 </div>
               ))

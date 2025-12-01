@@ -14,6 +14,7 @@ import { saveSession, generateId } from './utils/storage';
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'upload' | 'results'>('upload');
   const [resumeText, setResumeText] = useState<string>('');
+  const [profileImage, setProfileImage] = useState<string | undefined>(undefined);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showImprovementPanel, setShowImprovementPanel] = useState(false);
@@ -39,9 +40,10 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
-  const handleAnalyze = async (text: string) => {
+  const handleAnalyze = async (text: string, image?: string) => {
     setIsProcessing(true);
     setResumeText(text);
+    setProfileImage(image);
     setCurrentSessionId(generateId()); // New session
 
     // 1. Local Algo Scoring
@@ -63,6 +65,7 @@ const App: React.FC = () => {
   const handleLoadSession = (session: SavedSession) => {
     setResumeText(session.resumeText);
     setAnalysisResult(session.analysisResult);
+    setProfileImage(session.profileImage);
     setCurrentSessionId(session.id);
     setCurrentStep('results');
   };
@@ -84,7 +87,8 @@ const App: React.FC = () => {
         name: name,
         timestamp: Date.now(),
         resumeText: resumeText,
-        analysisResult: analysisResult
+        analysisResult: analysisResult,
+        profileImage: profileImage
     };
 
     saveSession(session);
@@ -193,6 +197,7 @@ const App: React.FC = () => {
           <ImprovementPanel 
             originalText={resumeText} 
             analysisResult={analysisResult}
+            profileImage={profileImage}
             onClose={() => setShowImprovementPanel(false)}
             onUpdateOriginal={handleUpdateOriginal}
           />

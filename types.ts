@@ -54,6 +54,7 @@ export interface SavedSession {
   timestamp: number;
   resumeText: string;
   analysisResult: AnalysisResult;
+  profileImage?: string;
 }
 
 export interface UserSettings {

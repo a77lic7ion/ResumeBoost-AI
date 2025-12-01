@@ -10,6 +10,7 @@ import { AnalysisResult, IssueSeverity } from '../types';
 interface ImprovementPanelProps {
   originalText: string;
   analysisResult?: AnalysisResult | null;
+  profileImage?: string;
   onClose: () => void;
   onUpdateOriginal: (newText: string) => void;
 }
@@ -21,18 +22,23 @@ const TEMPLATES: Record<TemplateType, string> = {
   modern: `
     font-family: 'Inter', sans-serif;
     color: #334155;
-    h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-size: 2em; }
+    .profile-photo { float: left; width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-right: 20px; border: 3px solid #e2e8f0; }
+    .header-container { display: flex; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; }
+    h1 { color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em; font-size: 2em; margin: 0; }
     h2 { color: #1e293b; margin-top: 2rem; font-size: 1.25em; font-weight: 700; border-left: 4px solid #cbd5e1; padding-left: 1rem; }
     h3 { color: #475569; font-weight: 600; margin-top: 1.5rem; }
     p { line-height: 1.6; margin-bottom: 1rem; }
     ul { padding-left: 1.5rem; }
     li { margin-bottom: 0.5rem; position: relative; }
     li::marker { color: #2563eb; }
+    .clearfix::after { content: ""; display: table; clear: both; }
   `,
   classic: `
     font-family: 'Times New Roman', serif;
     color: #1a1a1a;
-    h1 { text-align: center; color: #000; font-size: 2.5em; margin-bottom: 1rem; border-bottom: 1px solid #000; }
+    .profile-photo { display: block; width: 100px; height: 100px; margin: 0 auto 15px auto; border-radius: 5px; object-fit: cover; border: 1px solid #000; }
+    .header-container { text-align: center; border-bottom: 1px solid #000; padding-bottom: 1rem; margin-bottom: 1rem; }
+    h1 { text-align: center; color: #000; font-size: 2.5em; margin-bottom: 0.5rem; }
     h2 { text-transform: uppercase; border-bottom: 1px solid #666; font-size: 1.2em; margin-top: 2em; padding-bottom: 5px; }
     h3 { font-style: italic; font-weight: bold; margin-top: 1em; }
     p { text-align: justify; line-height: 1.5; }
@@ -41,16 +47,18 @@ const TEMPLATES: Record<TemplateType, string> = {
   minimal: `
     font-family: 'Arial', sans-serif;
     color: #111;
+    .profile-photo { float: right; width: 80px; height: 80px; border-radius: 4px; object-fit: cover; margin-left: 20px; filter: grayscale(100%); }
     h1 { font-weight: 900; font-size: 3em; letter-spacing: -1px; line-height: 1; margin-bottom: 2rem; }
     h2 { font-weight: 800; font-size: 1em; text-transform: uppercase; margin-top: 3rem; margin-bottom: 1rem; letter-spacing: 1px; }
     h3 { font-weight: 700; font-size: 1em; margin-bottom: 0.5rem; }
     p, li { font-size: 0.95em; line-height: 1.7; color: #444; }
     ul { list-style: none; padding: 0; }
     li:before { content: "•"; color: #f97316; font-weight: bold; display: inline-block; width: 1em; margin-left: -1em; }
+    .clearfix::after { content: ""; display: table; clear: both; }
   `
 };
 
-const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analysisResult, onClose, onUpdateOriginal }) => {
+const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analysisResult, profileImage, onClose, onUpdateOriginal }) => {
   const [improvedText, setImprovedText] = useState(originalText);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0); // 0 to 100
@@ -69,19 +77,28 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     setViewMode('diff');
   }, [originalText]);
 
-  // Loading Progress Logic
+  // Loading Progress Logic - FIX for stall at 90%
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (loading) {
         setProgress(0);
         interval = setInterval(() => {
             setProgress(prev => {
-                // Slower increment as it gets higher, never reaches 100 until complete
-                if (prev >= 90) return prev;
-                const increment = Math.max(1, (90 - prev) / 10);
-                return prev + increment;
+                // If we are close to the end, move extremely slowly to simulate work without stalling completely
+                if (prev >= 98) return prev; 
+                
+                let increment = 0;
+                if (prev < 60) {
+                    increment = Math.random() * 5 + 2; // Fast start
+                } else if (prev < 85) {
+                    increment = Math.random() * 2 + 1; // Slow down
+                } else {
+                    increment = 0.2; // Crawl to end
+                }
+                
+                return Math.min(prev + increment, 99);
             });
-        }, 300);
+        }, 500);
     } else {
         setProgress(100);
     }
@@ -103,15 +120,10 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     
     try {
         const result = await improveResumeContent(improvedText, promptToUse);
-        
-        // If the user cancelled, result might be empty or we ignore it.
-        // Since getGenerativeModel doesn't directly take signal easily in all wrappers,
-        // we check if loading is still true before applying.
         setImprovedText(result);
         setViewMode('diff'); 
     } catch (e) {
         console.error(e);
-        // Don't alert if it was just an abort (though here we can't easily distinguish without checking error type)
     } finally {
         setLoading(false);
         abortControllerRef.current = null;
@@ -130,6 +142,23 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     navigator.clipboard.writeText(improvedText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const getRenderedContent = () => {
+     const cleanHtml = DOMPurify.sanitize(marked.parse(improvedText) as string);
+     
+     if (profileImage) {
+        // Inject image at the top
+        return `
+          <div class="clearfix">
+            <img src="${profileImage}" class="profile-photo" alt="Profile Photo" />
+            <div class="resume-body">
+                ${cleanHtml}
+            </div>
+          </div>
+        `;
+     }
+     return cleanHtml;
   };
 
   const handleExportPDF = () => {
@@ -163,6 +192,8 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
   };
 
   const handleExportDOCX = () => {
+    // Basic DOCX export doesn't easily support images without complex library, 
+    // we will strip the image for basic text export or include as simple HTML
     const htmlContent = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
@@ -172,7 +203,9 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
             ${TEMPLATES[selectedTemplate]}
         </style>
       </head>
-      <body>${marked.parse(improvedText)}</body></html>
+      <body>
+        ${getRenderedContent()}
+      </body></html>
     `;
     const blob = new Blob(['\ufeff', htmlContent], {
       type: 'application/msword'
@@ -242,7 +275,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                         ></div>
                     </div>
                     <p className="text-center text-sm text-slate-500 dark:text-slate-400 pt-2">
-                        Applying best practices and formatting...
+                        {progress > 85 ? "Finalizing edits and formatting..." : "Applying best practices..."}
                     </p>
                 </div>
 
@@ -499,7 +532,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                             }}
                         >   
                             <style>{TEMPLATES[selectedTemplate]}</style>
-                            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(improvedText) as string) }} />
+                            <div dangerouslySetInnerHTML={{ __html: getRenderedContent() }} />
                         </div>
                     )}
 

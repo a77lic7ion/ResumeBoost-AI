@@ -99,14 +99,15 @@ export const improveResumeContent = async (originalText: string, specificInstruc
       ${originalText.slice(0, 12000)}
       
       OUTPUT REQUIREMENTS:
-      - Use standard Markdown formatting (Headers #, ##, Bullets -, etc).
+      - Use STRICT Markdown formatting.
+      - Use # for Name/Title, ## for Sections, ### for Roles/Companies, and - for bullet points.
+      - Ensure clear separation between sections.
       - Use strong action verbs.
-      - Quantify achievements where numbers are present or can be inferred.
-      - Maintain a clean, professional format.
-      - Do NOT include placeholders like [Insert Number] unless absolutely necessary.
-      - Return ONLY the rewritten text/markdown. Do not add conversational filler.`,
+      - Quantify achievements where numbers are present or can be inferred (e.g. "Managed team of 5").
+      - Remove any "Strength Graphs" or "Skill Bars" textual representations, convert them to lists.
+      - Return ONLY the rewritten markdown. Do not add conversational filler.`,
       config: {
-        maxOutputTokens: 4000,
+        maxOutputTokens: 8000,
       }
     });
 

@@ -191,6 +191,7 @@ const App: React.FC = () => {
         {showImprovementPanel && (
           <ImprovementPanel 
             originalText={resumeText} 
+            analysisResult={analysisResult}
             onClose={() => setShowImprovementPanel(false)}
             onUpdateOriginal={handleUpdateOriginal}
           />

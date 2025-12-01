@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnalysisResult, Issue, IssueSeverity } from '../types';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import { CheckCircle, AlertTriangle, XCircle, Wand2, Save } from 'lucide-react';
 
 interface DashboardProps {
@@ -80,7 +80,6 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
         {/* Chart */}
         <div className="lg:col-span-2 glass-effect border border-slate-200 dark:border-slate-700/80 rounded-2xl p-8 shadow-lg dark:shadow-black/20 flex flex-col">
           <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Score Breakdown</h3>
-          {/* Explicit height to fix Recharts warning */}
           <div className="w-full h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
@@ -107,6 +106,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
                     {data.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill="#f97316" className="opacity-90 hover:opacity-100 transition-opacity" />
                     ))}
+                    <LabelList dataKey="score" position="right" fill="#94a3b8" fontSize={12} fontWeight="bold" />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

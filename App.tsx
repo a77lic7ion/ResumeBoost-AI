@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ResumeInput from './components/ResumeInput';
 import Dashboard from './components/Dashboard';
@@ -124,12 +123,6 @@ const App: React.FC = () => {
                 <span className="font-bold text-xl text-gray-900 dark:text-white">ResumeBoost AI</span>
             </div>
             
-            <div className="hidden md:flex items-center space-x-8">
-                <button onClick={() => setCurrentStep('upload')} className="text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors">Features</button>
-                <button onClick={() => setCurrentStep('upload')} className="text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors">Pricing</button>
-                <button className="text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors">About</button>
-            </div>
-
             <div className="flex items-center space-x-4">
                  <button 
                     onClick={() => setDarkMode(!darkMode)}
@@ -142,11 +135,6 @@ const App: React.FC = () => {
                     className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
                 >
                     <Settings size={20} />
-                </button>
-
-                <a href="#" className="hidden sm:block text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors">Sign In</a>
-                <button className="gradient-btn text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all">
-                    Get Started
                 </button>
             </div>
         </nav>

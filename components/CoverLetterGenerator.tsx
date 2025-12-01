@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { generateCoverLetter } from '../services/geminiService';
-import { PenTool, FileText, Loader2, Copy, Check, Download } from 'lucide-react';
+import { PenTool, FileText, Loader2, Copy, Check, Download, CheckCircle2 } from 'lucide-react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
@@ -53,11 +53,16 @@ const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({ resumeText 
              <PenTool className="text-primary" /> Cover Letter Writer
            </h2>
            <p className="text-gray-500 dark:text-gray-400 mt-2">
-             One-click generation of a professional cover letter tailored to your resume and the target job.
+             One-click generation of a professional cover letter tailored to your uploaded resume and the target job.
            </p>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-lg border border-gray-200 dark:border-zinc-800">
+           {/* Resume Status Badge */}
+           <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg text-xs font-bold border border-green-200 dark:border-green-900/30">
+               <CheckCircle2 size={14} /> Uploaded Resume Active
+           </div>
+
            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
              Target Job Description (Optional)
            </label>

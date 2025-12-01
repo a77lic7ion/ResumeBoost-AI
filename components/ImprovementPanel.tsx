@@ -274,7 +274,8 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Resume_Optimized.doc`; // .doc is often safer for HTML-based exports to be opened by Google Docs
+    // Changed to .doc (Word 97-2003) for better compatibility with HTML based content
+    link.download = `Resume_Optimized.doc`; 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -472,7 +473,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                         <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Download</label>
                         <div className="grid grid-cols-2 gap-3">
                             <button onClick={handleExportPDF} disabled={loading} className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors text-xs font-bold text-gray-700 dark:text-gray-200"><FileDown size={14} /> PDF</button>
-                            <button onClick={handleExportDOCX} disabled={loading} className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors text-xs font-bold text-gray-700 dark:text-gray-200"><Download size={14} /> DOCX</button>
+                            <button onClick={handleExportDOCX} disabled={loading} className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors text-xs font-bold text-gray-700 dark:text-gray-200"><Download size={14} /> DOC</button>
                         </div>
                     </div>
                 </div>

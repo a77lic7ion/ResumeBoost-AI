@@ -4,7 +4,7 @@ import * as mammoth from 'mammoth';
 import { extractTextFromMultimodal } from '../services/geminiService';
 import { getSessions, deleteSession } from '../utils/storage';
 import { SavedSession } from '../types';
-import { Loader2, Trash2, AlertCircle, Camera, Image as ImageIcon, X, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
+import { Loader2, Trash2, AlertCircle, Camera, Image as ImageIcon, X, Link as LinkIcon, CheckCircle2, HelpCircle } from 'lucide-react';
 
 interface ResumeInputProps {
   onAnalyze: (text: string, image?: string) => void;
@@ -194,9 +194,9 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         )}
 
         {/* Profile Photo & LinkedIn Section */}
-        <div className="flex flex-col md:flex-row justify-center items-center gap-8 mb-8">
+        <div className="flex flex-col md:flex-row justify-center items-start gap-8 mb-8">
             {/* Photo */}
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-2 mt-2">
                 <div className="relative group">
                     <div 
                         onClick={() => photoInputRef.current?.click()}
@@ -243,7 +243,7 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
                         type="text" 
                         value={linkedinUrl}
                         onChange={handleLinkedinChange}
-                        placeholder="https://linkedin.com/in/..."
+                        placeholder="https://www.linkedin.com/in/yourname"
                         className={`w-full pl-9 pr-8 py-2 text-sm bg-gray-50 dark:bg-zinc-800 border rounded-lg focus:ring-2 outline-none transition-colors
                         ${!isLinkedinValid && linkedinUrl.length > 0
                             ? 'border-red-300 focus:border-red-500 focus:ring-red-200' 
@@ -254,9 +254,21 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
                         <CheckCircle2 size={14} className="absolute right-3 top-2.5 text-green-500" />
                     )}
                 </div>
-                {!isLinkedinValid && linkedinUrl.length > 0 && (
-                     <p className="text-[10px] text-red-500 mt-1">Invalid LinkedIn URL format</p>
-                )}
+                <div className="flex justify-between items-start mt-1">
+                    {!isLinkedinValid && linkedinUrl.length > 0 ? (
+                         <p className="text-[10px] text-red-500">Invalid URL format</p>
+                    ) : (
+                        <p className="text-[10px] text-gray-400">e.g. https://www.linkedin.com/in/johndoe</p>
+                    )}
+                    <a 
+                        href="https://www.linkedin.com/in/me" 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                    >
+                        <HelpCircle size={10} /> Find my URL
+                    </a>
+                </div>
             </div>
         </div>
 

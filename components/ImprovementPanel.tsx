@@ -167,7 +167,6 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
     
     // Simple injection logic for basic fields
     let newText = improvedText;
-    const headerEndIndex = improvedText.indexOf('##'); // Assuming first section starts with ##
     
     if (issueId === 'missing-email' || issueId === 'missing-phone' || issueId === 'missing-linkedin') {
         // Try to inject in the first few lines
@@ -185,7 +184,10 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
         }
     } else if (issueId.includes('missing-section')) {
         // Append section to end
-        newText = `${improvedText}\n\n## ${value}\n- [Add details here]`;
+        // Clean up the value to ensure it's markdown ready
+        const sectionName = issueId.split('-')[2];
+        const formattedTitle = sectionName.charAt(0).toUpperCase() + sectionName.slice(1);
+        newText = `${improvedText}\n\n## ${formattedTitle}\n${value}`;
     }
 
     setImprovedText(newText);
@@ -244,15 +246,30 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
   };
 
   const handleExportDOCX = () => {
-    const htmlContent = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head><meta charset='utf-8'><title>Resume</title><style>${TEMPLATES[selectedTemplate]}</style></head><body>${getRenderedContent()}</body></html>
-    `;
-    const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+    // Correct way to export to DOCX compatible HTML (MHTML style wrapper)
+    const content = getRenderedContent();
+    const styles = TEMPLATES[selectedTemplate];
+    
+    const preHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset='utf-8'><title>Resume</title>
+    <style>
+      ${styles}
+      /* Ensure Word understands spacing */
+      body { font-family: sans-serif; }
+    </style>
+    </head><body>`;
+    
+    const postHtml = "</body></html>";
+    const html = preHtml + content + postHtml;
+
+    const blob = new Blob(['\ufeff', html], {
+        type: 'application/msword'
+    });
+    
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `resume_optimized.doc`;
+    link.download = `Resume_Optimized.doc`; // .doc is often safer for HTML-based exports than .docx for Google Docs
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -536,6 +553,42 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                                                         className="w-full md:w-auto text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 text-blue-600 dark:text-blue-300 px-3 py-2 rounded transition-colors flex items-center justify-center gap-1 whitespace-nowrap"
                                                     >
                                                         <PlusCircle size={12} /> Add {issue.id.split('-')[1]}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ) : issue.id.includes('missing-section') ? (
+                                            /* Dedicated Section Add */
+                                            <div className="w-full md:w-auto mt-2 md:mt-0">
+                                                {activeFixId === issue.id ? (
+                                                     <div className="flex flex-col gap-2 w-full md:min-w-[300px]">
+                                                         <textarea
+                                                            autoFocus
+                                                            placeholder={`Enter content for ${issue.id.split('-')[2]} section...`}
+                                                            className="w-full h-24 px-2 py-1.5 text-xs border border-gray-300 dark:border-zinc-700 rounded bg-white dark:bg-zinc-900 text-gray-900 dark:text-white resize-none"
+                                                            value={quickFixValue}
+                                                            onChange={(e) => setQuickFixValue(e.target.value)}
+                                                         />
+                                                         <div className="flex gap-2 justify-end">
+                                                            <button 
+                                                                onClick={() => setActiveFixId(null)}
+                                                                className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 text-gray-600 dark:text-gray-300 rounded text-xs hover:bg-gray-300"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleManualFix(issue.id, quickFixValue)}
+                                                                className="px-3 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
+                                                            >
+                                                                Add Section
+                                                            </button>
+                                                         </div>
+                                                     </div>
+                                                ) : (
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); setActiveFixId(issue.id); setQuickFixValue(''); }}
+                                                        className="w-full md:w-auto text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 text-blue-600 dark:text-blue-300 px-3 py-2 rounded transition-colors flex items-center justify-center gap-1 whitespace-nowrap"
+                                                    >
+                                                        <PlusCircle size={12} /> Create Section
                                                     </button>
                                                 )}
                                             </div>

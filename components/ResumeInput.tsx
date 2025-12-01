@@ -4,7 +4,7 @@ import * as mammoth from 'mammoth';
 import { extractTextFromMultimodal } from '../services/geminiService';
 import { getSessions, deleteSession } from '../utils/storage';
 import { SavedSession } from '../types';
-import { Loader2, Trash2, AlertCircle, Camera, Image as ImageIcon, X } from 'lucide-react';
+import { Loader2, Trash2, AlertCircle, Camera, Image as ImageIcon, X, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
 
 interface ResumeInputProps {
   onAnalyze: (text: string, image?: string) => void;
@@ -21,6 +21,10 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
   // Image States
   const [extractedImage, setExtractedImage] = useState<string | undefined>(undefined); // From DOCX/PDF
   const [manualImage, setManualImage] = useState<string | undefined>(undefined); // User uploaded
+  
+  // LinkedIn State
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [isLinkedinValid, setIsLinkedinValid] = useState(true);
   
   const [fileName, setFileName] = useState<string>('');
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>([]);
@@ -70,7 +74,6 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
       const file = e.target.files[0];
       try {
         const base64 = await fileToBase64(file);
-        // Add data URI prefix if missing (usually fileToBase64 includes it from FileReader)
         setManualImage(base64.startsWith('data:') ? base64 : `data:${file.type};base64,${base64}`);
       } catch (err) {
         console.error("Error uploading photo", err);
@@ -78,14 +81,27 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
     }
   };
 
+  const validateLinkedin = (url: string) => {
+      const regex = /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[\w-]+\/?$/;
+      return regex.test(url);
+  };
+
+  const handleLinkedinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      setLinkedinUrl(val);
+      if (val.length > 0) {
+          setIsLinkedinValid(validateLinkedin(val));
+      } else {
+          setIsLinkedinValid(true);
+      }
+  };
+
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-        const result = reader.result as string;
-        // Keep the full data URL for display purposes
-        resolve(result);
+        resolve(reader.result as string);
       };
       reader.onerror = error => reject(error);
     });
@@ -134,7 +150,6 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         try {
             const extracted = await extractTextFromMultimodal(base64Data, file.type);
             setText(extracted);
-            // If it's an image file, use it as the "resume image" as well, though usually not a headshot
         } catch (visionError: any) {
             console.error("Multimodal extraction failed", visionError);
             setError(visionError.message || "Failed to extract text. Check API Key permissions.");
@@ -152,10 +167,17 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
     }
   };
 
+  const handleAnalyzeClick = () => {
+      let finalText = text;
+      // Append LinkedIn if valid and present
+      if (linkedinUrl && isLinkedinValid && !text.toLowerCase().includes('linkedin.com')) {
+          finalText = `LinkedIn: ${linkedinUrl}\n\n${text}`;
+      }
+      onAnalyze(finalText, activeProfileImage);
+  };
+
   const isLoading = isProcessing || extracting;
   const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
-  
-  // Prioritize manual upload, then extracted, then null
   const activeProfileImage = manualImage || extractedImage;
 
   return (
@@ -170,8 +192,9 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
             </div>
         )}
 
-        {/* Profile Photo Upload Section */}
-        <div className="flex justify-center mb-8">
+        {/* Profile Photo & LinkedIn Section */}
+        <div className="flex flex-col md:flex-row justify-center items-center gap-8 mb-8">
+            {/* Photo */}
             <div className="flex flex-col items-center gap-2">
                 <div className="relative group">
                     <div 
@@ -206,6 +229,33 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
                     className="hidden"
                     onChange={handlePhotoUpload}
                 />
+            </div>
+
+            {/* LinkedIn Input */}
+            <div className="w-full max-w-xs">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">LinkedIn Profile (Optional)</label>
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <LinkIcon size={14} className="text-gray-400" />
+                    </div>
+                    <input 
+                        type="text" 
+                        value={linkedinUrl}
+                        onChange={handleLinkedinChange}
+                        placeholder="https://linkedin.com/in/..."
+                        className={`w-full pl-9 pr-8 py-2 text-sm bg-gray-50 dark:bg-zinc-800 border rounded-lg focus:ring-2 outline-none transition-colors
+                        ${!isLinkedinValid && linkedinUrl.length > 0
+                            ? 'border-red-300 focus:border-red-500 focus:ring-red-200' 
+                            : 'border-gray-200 dark:border-zinc-700 focus:ring-primary/20 focus:border-primary'
+                        } text-gray-800 dark:text-gray-200`}
+                    />
+                    {isLinkedinValid && linkedinUrl.length > 0 && (
+                        <CheckCircle2 size={14} className="absolute right-3 top-2.5 text-green-500" />
+                    )}
+                </div>
+                {!isLinkedinValid && linkedinUrl.length > 0 && (
+                     <p className="text-[10px] text-red-500 mt-1">Invalid LinkedIn URL format</p>
+                )}
             </div>
         </div>
 
@@ -293,10 +343,10 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         {/* Action Button */}
         <div className="mt-6 flex justify-center">
             <button 
-                onClick={() => onAnalyze(text, activeProfileImage)}
-                disabled={text.length < 50 || isLoading}
+                onClick={handleAnalyzeClick}
+                disabled={text.length < 50 || isLoading || (!isLinkedinValid && linkedinUrl.length > 0)}
                 className={`gradient-btn text-white font-semibold py-3 px-12 rounded-lg w-full max-w-xs transition-opacity
-                 ${text.length < 50 || isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg transform hover:-translate-y-0.5'}`}
+                 ${text.length < 50 || isLoading || (!isLinkedinValid && linkedinUrl.length > 0) ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg transform hover:-translate-y-0.5'}`}
             >
                 {isLoading ? (
                     <span className="flex items-center justify-center gap-2">

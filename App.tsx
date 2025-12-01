@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import ResumeInput from './components/ResumeInput';
 import Dashboard from './components/Dashboard';
@@ -98,11 +99,12 @@ const App: React.FC = () => {
       <header className="container mx-auto px-6 py-4">
         <nav className="flex items-center justify-between">
             <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentStep('upload')}>
-                {/* Updated Navbar Logo */}
+                {/* Navbar Logo */}
                 <img 
                   src="/logo.png" 
                   alt="ResumeBoost AI" 
                   className="w-10 h-10 object-contain drop-shadow-sm" 
+                  crossOrigin="anonymous"
                   onError={(e) => {
                     // Fallback if image not found
                     e.currentTarget.style.display = 'none';
@@ -160,11 +162,12 @@ const App: React.FC = () => {
                             </p>
                         </div>
                         <div className="order-1 md:order-2 flex justify-center">
-                             {/* Updated Hero Image to use new Logo */}
+                             {/* Hero Image */}
                              <img 
                                 alt="ResumeBoost AI Logo" 
                                 className="w-full max-w-md mx-auto drop-shadow-2xl object-contain hover:scale-105 transition-transform duration-500" 
                                 src="/logo.png"
+                                crossOrigin="anonymous"
                              />
                         </div>
                     </div>

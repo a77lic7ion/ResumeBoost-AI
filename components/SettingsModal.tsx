@@ -22,25 +22,32 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
   }, []);
 
   const getEnvApiKey = () => {
-    // @ts-ignore - Vite handling
-    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+    let key = undefined;
+    try {
       // @ts-ignore
-      return import.meta.env.VITE_API_KEY;
+      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+        // @ts-ignore
+        key = import.meta.env.VITE_API_KEY;
+      }
+    } catch(e) {}
+    
+    if (!key) {
+      try {
+        if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+          key = process.env.API_KEY;
+        }
+      } catch(e) {}
     }
-    // Standard process.env handling
-    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-      return process.env.API_KEY;
-    }
-    return undefined;
+    return key;
   };
 
   const handleSave = () => {
-    saveSettings({ apiKey });
+    saveSettings({ apiKey: apiKey.trim() });
     onClose();
   };
 
   const handleTestConnection = async () => {
-    const keyToTest = apiKey || getEnvApiKey();
+    const keyToTest = apiKey.trim() || getEnvApiKey();
     if (!keyToTest) {
       setTestStatus('error');
       setErrorMessage("No API Key provided to test.");
@@ -58,7 +65,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
       setTestStatus('success');
     } else {
       setTestStatus('error');
-      setErrorMessage("Connection failed. The key might be invalid or expired.");
+      setErrorMessage("Connection failed. Key is invalid or lacks permissions (Error 403).");
     }
   };
 
@@ -100,17 +107,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
               <Key size={16} className="absolute left-3 top-2.5 text-slate-400" />
             </div>
             
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 dark:text-slate-400">
-                {isUsingEnv 
-                  ? <span className="flex items-center gap-1 text-green-600 dark:text-green-400"><ShieldCheck size={12}/> Using secure environment variable</span> 
-                  : apiKey 
-                    ? "Using custom key provided above" 
-                    : "No key found"}
+            <div className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
+              <span className="flex items-center justify-between">
+                <span>
+                    {isUsingEnv 
+                    ? <span className="flex items-center gap-1 text-green-600 dark:text-green-400"><ShieldCheck size={12}/> Using secure environment variable</span> 
+                    : apiKey 
+                        ? "Using custom key provided above" 
+                        : "No key found"}
+                </span>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                    Get API Key
+                </a>
               </span>
-              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                Get API Key
-              </a>
+              <span className="text-[10px] text-slate-400 mt-1">
+                Note for Vercel: Set variable name to <code>VITE_API_KEY</code>
+              </span>
             </div>
           </div>
 

@@ -88,21 +88,20 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         const arrayBuffer = await file.arrayBuffer();
         
         // Extract Text
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        setText(result.value);
-
-        // Attempt to extract Image (Profile Picture)
         try {
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            setText(result.value);
+
+            // Attempt to extract Image (Profile Picture)
             const htmlResult = await mammoth.convertToHtml({ arrayBuffer });
-            // Look for any standard img tag with base64 src
             const imgMatch = htmlResult.value.match(/<img[^>]+src=["']([^"']+)["']/);
             if (imgMatch && imgMatch[1]) {
                 setExtractedImage(imgMatch[1]);
             }
-        } catch (imgError) {
-            console.warn("Could not extract image from DOCX", imgError);
+        } catch (docxError) {
+            console.error(docxError);
+            alert("Error parsing DOCX file. Please try saving as PDF or plain text.");
         }
-
         setExtracting(false);
       } 
       else if (
@@ -110,9 +109,17 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         file.type.startsWith('image/')
       ) {
         const base64 = await fileToBase64(file);
-        const extracted = await extractTextFromMultimodal(base64, file.type);
-        setText(extracted);
-        // Note: Extracting profile image from PDF/Image via Gemini Vision is complex and not implemented here.
+        try {
+            const extracted = await extractTextFromMultimodal(base64, file.type);
+            setText(extracted);
+        } catch (visionError: any) {
+            console.error("Multimodal extraction failed", visionError);
+            if (visionError.message.includes('Permission Denied')) {
+                alert("Permission Denied: Your API Key does not have access to the model. Please check Settings.");
+            } else {
+                alert("Failed to extract text using AI. Please check your API Key or try a different file.");
+            }
+        }
         setExtracting(false);
       } 
       else {

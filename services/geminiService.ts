@@ -9,34 +9,55 @@ const VISION_MODEL = "gemini-2.5-flash"; // Supports PDF and Images
 
 // Helper to safely access env vars in browser or node
 const getEnvApiKey = () => {
-  // @ts-ignore - Vite handling
-  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+  let key = undefined;
+  
+  // 1. Check Vite/Browser standard (import.meta.env)
+  try {
     // @ts-ignore
-    return import.meta.env.VITE_API_KEY;
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      // @ts-ignore
+      if (import.meta.env.VITE_API_KEY) key = import.meta.env.VITE_API_KEY;
+      // @ts-ignore
+      else if (import.meta.env.API_KEY) key = import.meta.env.API_KEY;
+    }
+  } catch (e) {
+    // Ignore syntax errors in environments that don't support import.meta
   }
-  // Standard process.env handling (Next.js/CRA/Node)
-  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-    return process.env.API_KEY;
+
+  // 2. Check Node/Process standard (process.env)
+  if (!key) {
+    try {
+      if (typeof process !== 'undefined' && process.env) {
+        if (process.env.API_KEY) key = process.env.API_KEY;
+        else if (process.env.VITE_API_KEY) key = process.env.VITE_API_KEY;
+      }
+    } catch (e) {
+      // Ignore reference errors
+    }
   }
-  return undefined;
+
+  return key;
 };
 
 // Helper to get the best available API Key (User Settings > Environment Variable)
 const getApiKey = (): string | undefined => {
   const settings = getSettings();
   if (settings.apiKey && settings.apiKey.trim().length > 0) {
-    return settings.apiKey;
+    return settings.apiKey.trim();
   }
-  return getEnvApiKey();
+  const envKey = getEnvApiKey();
+  return envKey ? envKey.trim() : undefined;
 };
 
 // Helper to initialize AI instance dynamically
 const getAI = (): GoogleGenAI => {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error("API Key is missing. Please add it in Settings or configure .env");
+    throw new Error("API Key is missing. Please add it in Settings or configure VITE_API_KEY in .env");
   }
-  return new GoogleGenAI({ apiKey });
+  // Strip quotes if they were accidentally included in the env var
+  const cleanKey = apiKey.replace(/^["']|["']$/g, '');
+  return new GoogleGenAI({ apiKey: cleanKey });
 };
 
 /**
@@ -44,15 +65,19 @@ const getAI = (): GoogleGenAI => {
  */
 export const validateApiKey = async (apiKey: string): Promise<boolean> => {
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const cleanKey = apiKey.trim().replace(/^["']|["']$/g, '');
+    const ai = new GoogleGenAI({ apiKey: cleanKey });
     // Simple prompt to test connectivity
     await ai.models.generateContent({
       model: ANALYSIS_MODEL,
       contents: "Test connection",
     });
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error("API Key Validation Error:", error);
+    if (error.status === 403 || (error.message && error.message.includes('403'))) {
+      console.error("Permission Denied: Please check if the API Key is valid and the API is enabled in Google Cloud Console.");
+    }
     return false;
   }
 };
@@ -81,8 +106,11 @@ export const extractTextFromMultimodal = async (base64Data: string, mimeType: st
     });
     
     return response.text || "";
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Extraction Error:", error);
+    if (error.status === 403 || (error.toString().includes('403'))) {
+      throw new Error("Permission Denied: Your API Key is invalid or does not have access to the Gemini API.");
+    }
     throw new Error("Failed to extract text from file. Please check your API Key.");
   }
 };
@@ -120,12 +148,18 @@ export const analyzeWithGemini = async (resumeText: string): Promise<NonNullable
     if (!jsonText) throw new Error("Empty response from AI");
     
     return JSON.parse(jsonText);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Analysis Error:", error);
+    
+    let errorMessage = "AI Analysis unavailable. Please check your API Key settings.";
+    if (error.status === 403 || (error.toString().includes('403'))) {
+      errorMessage = "Error 403: Permission Denied. Check your API Key.";
+    }
+
     // Fallback in case of API failure to prevent app crash
     return {
-      summary: "AI Analysis unavailable. Please check your API Key settings.",
-      strengths: ["Content provided"],
+      summary: errorMessage,
+      strengths: ["Analysis Failed"],
       missingKeywords: ["N/A"],
       toneCheck: "N/A"
     };
@@ -162,8 +196,11 @@ export const improveResumeContent = async (originalText: string, specificInstruc
     });
 
     return response.text || "Could not generate improvement.";
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Improvement Error:", error);
+    if (error.status === 403 || (error.toString().includes('403'))) {
+      return "Error: Permission Denied. Please check your API Key in Settings.";
+    }
     return "Error generating improvements. Please check your API key and try again.";
   }
 };

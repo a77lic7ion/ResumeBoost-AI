@@ -1,11 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import ResumeInput from './components/ResumeInput';
 import Dashboard from './components/Dashboard';
 import ImprovementPanel from './components/ImprovementPanel';
+import SettingsModal from './components/SettingsModal';
 import { calculateAtsScore } from './utils/atsLogic';
 import { analyzeWithGemini } from './services/geminiService';
 import { AnalysisResult, SavedSession } from './types';
-import { FileText, Github, Moon, Sun } from 'lucide-react';
+import { FileText, Github, Moon, Sun, Settings } from 'lucide-react';
 import { saveSession, generateId } from './utils/storage';
 
 const App: React.FC = () => {
@@ -14,6 +16,7 @@ const App: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showImprovementPanel, setShowImprovementPanel] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   
   // Track current session ID for updates
@@ -121,6 +124,13 @@ const App: React.FC = () => {
               >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
+              <button 
+                onClick={() => setShowSettings(true)}
+                className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400"
+                title="Settings"
+              >
+                <Settings size={20} />
+              </button>
               <a href="#" className="text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">
                   <Github size={20} />
               </a>
@@ -195,6 +205,11 @@ const App: React.FC = () => {
             onClose={() => setShowImprovementPanel(false)}
             onUpdateOriginal={handleUpdateOriginal}
           />
+        )}
+
+        {/* Settings Modal */}
+        {showSettings && (
+          <SettingsModal onClose={() => setShowSettings(false)} />
         )}
 
         {/* Footer */}

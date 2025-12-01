@@ -1,6 +1,8 @@
-import { SavedSession } from "../types";
+
+import { SavedSession, UserSettings } from "../types";
 
 const STORAGE_KEY = 'resume_sessions';
+const SETTINGS_KEY = 'resume_settings';
 
 export const saveSession = (session: SavedSession) => {
   try {
@@ -42,4 +44,22 @@ export const deleteSession = (id: string) => {
 
 export const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
+};
+
+export const getSettings = (): UserSettings => {
+  try {
+    const json = localStorage.getItem(SETTINGS_KEY);
+    return json ? JSON.parse(json) : {};
+  } catch (error) {
+    console.error("Failed to load settings", error);
+    return {};
+  }
+};
+
+export const saveSettings = (settings: UserSettings) => {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (error) {
+    console.error("Failed to save settings", error);
+  }
 };

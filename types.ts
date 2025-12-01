@@ -1,3 +1,4 @@
+
 export interface ResumeData {
   text: string;
   fileName?: string;
@@ -53,6 +54,11 @@ export interface SavedSession {
   timestamp: number;
   resumeText: string;
   analysisResult: AnalysisResult;
+}
+
+export interface UserSettings {
+  apiKey?: string;
+  theme?: 'light' | 'dark' | 'system';
 }
 
 export type ProcessingStatus = 'idle' | 'parsing' | 'scoring' | 'ai-analyzing' | 'complete' | 'error';

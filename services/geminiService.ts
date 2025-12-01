@@ -1,19 +1,54 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
-
-// Initialize the Gemini API client
-// Note: process.env.API_KEY is expected to be available in the environment
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+import { getSettings } from "../utils/storage";
 
 const ANALYSIS_MODEL = "gemini-2.5-flash";
 const IMPROVEMENT_MODEL = "gemini-2.5-flash";
 const VISION_MODEL = "gemini-2.5-flash"; // Supports PDF and Images
+
+// Helper to get the best available API Key (User Settings > Environment Variable)
+const getApiKey = (): string | undefined => {
+  const settings = getSettings();
+  if (settings.apiKey && settings.apiKey.trim().length > 0) {
+    return settings.apiKey;
+  }
+  return process.env.API_KEY;
+};
+
+// Helper to initialize AI instance dynamically
+const getAI = (): GoogleGenAI => {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error("API Key is missing. Please add it in Settings or configure .env");
+  }
+  return new GoogleGenAI({ apiKey });
+};
+
+/**
+ * Validates a provided API key by making a minimal request.
+ */
+export const validateApiKey = async (apiKey: string): Promise<boolean> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    // Simple prompt to test connectivity
+    await ai.models.generateContent({
+      model: ANALYSIS_MODEL,
+      contents: "Test connection",
+    });
+    return true;
+  } catch (error) {
+    console.error("API Key Validation Error:", error);
+    return false;
+  }
+};
 
 /**
  * Extracts text from an Image or PDF file using Gemini's multimodal capabilities.
  */
 export const extractTextFromMultimodal = async (base64Data: string, mimeType: string): Promise<string> => {
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: VISION_MODEL,
       contents: {
@@ -34,16 +69,16 @@ export const extractTextFromMultimodal = async (base64Data: string, mimeType: st
     return response.text || "";
   } catch (error) {
     console.error("Gemini Extraction Error:", error);
-    throw new Error("Failed to extract text from file.");
+    throw new Error("Failed to extract text from file. Please check your API Key.");
   }
 };
 
 /**
  * Performs a qualitative analysis of the resume using Gemini.
- * It checks for tone, missing keywords based on context, and strengths.
  */
 export const analyzeWithGemini = async (resumeText: string): Promise<NonNullable<AnalysisResult['aiAnalysis']>> => {
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: ANALYSIS_MODEL,
       contents: `Analyze the following resume text for a general professional role. 
@@ -75,7 +110,7 @@ export const analyzeWithGemini = async (resumeText: string): Promise<NonNullable
     console.error("Gemini Analysis Error:", error);
     // Fallback in case of API failure to prevent app crash
     return {
-      summary: "AI Analysis unavailable at this moment.",
+      summary: "AI Analysis unavailable. Please check your API Key settings.",
       strengths: ["Content provided"],
       missingKeywords: ["N/A"],
       toneCheck: "N/A"
@@ -88,6 +123,7 @@ export const analyzeWithGemini = async (resumeText: string): Promise<NonNullable
  */
 export const improveResumeContent = async (originalText: string, specificInstruction: string): Promise<string> => {
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: IMPROVEMENT_MODEL,
       contents: `You are an expert Resume Writer and ATS Optimization Specialist.

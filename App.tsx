@@ -6,14 +6,18 @@ import ImprovementPanel from './components/ImprovementPanel';
 import SettingsModal from './components/SettingsModal';
 import LandingFeatures from './components/LandingFeatures';
 import PricingSection from './components/PricingSection';
+import JobAnalyzer from './components/JobAnalyzer';
+import CoverLetterGenerator from './components/CoverLetterGenerator';
 import { calculateAtsScore } from './utils/atsLogic';
 import { analyzeWithGemini } from './services/geminiService';
 import { AnalysisResult, SavedSession } from './types';
-import { Settings, Moon, Sun, Github } from 'lucide-react';
+import { Settings, Moon, Sun, Github, FileText, Briefcase, PenTool } from 'lucide-react';
 import { saveSession, generateId } from './utils/storage';
 
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'upload' | 'results'>('upload');
+  const [activeTab, setActiveTab] = useState<'resume' | 'job' | 'cover'>('resume');
+  
   const [resumeText, setResumeText] = useState<string>('');
   const [profileImage, setProfileImage] = useState<string | undefined>(undefined);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -54,6 +58,7 @@ const App: React.FC = () => {
 
     setIsProcessing(false);
     setCurrentStep('results');
+    setActiveTab('resume');
   };
 
   const handleLoadSession = (session: SavedSession) => {
@@ -62,6 +67,7 @@ const App: React.FC = () => {
     setProfileImage(session.profileImage);
     setCurrentSessionId(session.id);
     setCurrentStep('results');
+    setActiveTab('resume');
   };
 
   const handleSave = () => {
@@ -190,20 +196,48 @@ const App: React.FC = () => {
              </div>
          ) : (
              <div className="container mx-auto px-6 py-12 animate-fade-in-up">
-                  <div className="mb-8">
+                  <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                      <button 
                        onClick={() => setCurrentStep('upload')}
-                       className="text-gray-500 hover:text-primary dark:text-gray-400 font-medium flex items-center gap-2 transition-colors mb-4"
+                       className="text-gray-500 hover:text-primary dark:text-gray-400 font-medium flex items-center gap-2 transition-colors"
                      >
                        <span className="material-symbols-outlined">arrow_back</span> Analyze Another
                      </button>
-                     {analysisResult && (
-                        <Dashboard 
-                            analysis={analysisResult} 
-                            onImproveClick={() => setShowImprovementPanel(true)} 
-                            onSave={handleSave}
-                        />
-                     )}
+                  </div>
+
+                  {/* Feature Navigation Tabs */}
+                  <div className="flex flex-wrap gap-2 mb-8 bg-white dark:bg-zinc-900 p-2 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-800 w-fit">
+                      <button 
+                        onClick={() => setActiveTab('resume')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'resume' ? 'bg-primary text-white shadow-md' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'}`}
+                      >
+                         <FileText size={16} /> Resume Score
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab('job')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'job' ? 'bg-primary text-white shadow-md' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'}`}
+                      >
+                         <Briefcase size={16} /> Job Analyzer
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab('cover')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'cover' ? 'bg-primary text-white shadow-md' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'}`}
+                      >
+                         <PenTool size={16} /> Cover Letter
+                      </button>
+                  </div>
+                  
+                  {/* Dynamic Content */}
+                  <div className="min-h-[600px]">
+                      {activeTab === 'resume' && analysisResult && (
+                          <Dashboard 
+                              analysis={analysisResult} 
+                              onImproveClick={() => setShowImprovementPanel(true)} 
+                              onSave={handleSave}
+                          />
+                      )}
+                      {activeTab === 'job' && <JobAnalyzer />}
+                      {activeTab === 'cover' && <CoverLetterGenerator resumeText={resumeText} />}
                   </div>
              </div>
          )}

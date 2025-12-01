@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnalysisResult } from "../types";
+import { AnalysisResult, JobAnalysisResult } from "../types";
 import { getSettings } from "../utils/storage";
 
 const ANALYSIS_MODEL = "gemini-2.5-flash";
@@ -206,5 +206,75 @@ export const improveResumeContent = async (originalText: string, specificInstruc
   } catch (error: any) {
     const friendlyError = handleGeminiError(error);
     return `Error generating improvements.\n\n${friendlyError}`;
+  }
+};
+
+/**
+ * Analyzes a Job Description to extract key data points.
+ */
+export const analyzeJobDescription = async (jobDescription: string): Promise<JobAnalysisResult> => {
+  try {
+    const ai = getAI();
+    const response = await ai.models.generateContent({
+      model: ANALYSIS_MODEL,
+      contents: `Analyze the following Job Description (JD) and provide a structured "Cheat Sheet" for a candidate applying to this role.
+      
+      JOB DESCRIPTION:
+      ${jobDescription.slice(0, 10000)}`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            roleTitle: { type: Type.STRING, description: "The likely job title." },
+            keywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Top 5-10 essential ATS keywords found in the text." },
+            hardSkills: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Specific technical or hard skills required." },
+            softSkills: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Interpersonal or soft skills mentioned." },
+            responsibilities: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Summary of 3-5 core responsibilities." },
+            cultureFit: { type: Type.STRING, description: "Brief description of the company culture or values implied." }
+          },
+          required: ["roleTitle", "keywords", "hardSkills", "softSkills", "responsibilities", "cultureFit"],
+        }
+      }
+    });
+
+    const jsonText = response.text;
+    if (!jsonText) throw new Error("Empty response from AI");
+    return JSON.parse(jsonText);
+  } catch (error: any) {
+    const friendlyError = handleGeminiError(error);
+    throw new Error(friendlyError);
+  }
+};
+
+/**
+ * Generates a Cover Letter based on the Resume and (Optional) Job Description.
+ */
+export const generateCoverLetter = async (resumeText: string, jobDescription?: string): Promise<string> => {
+  try {
+    const ai = getAI();
+    const prompt = `You are an expert Career Coach. Write a professional, compelling cover letter for the candidate.
+    
+    CANDIDATE RESUME:
+    ${resumeText.slice(0, 8000)}
+    
+    ${jobDescription ? `TARGET JOB DESCRIPTION: ${jobDescription.slice(0, 5000)}` : 'TARGET ROLE: General Application'}
+    
+    INSTRUCTIONS:
+    - Tone: Confident, professional, and enthusiastic.
+    - Structure: Standard business letter format.
+    - Content: Align the candidate's strongest achievements from the resume with the requirements of the job description (if provided).
+    - If no JD is provided, focus on the candidate's top 3 transferable skills and leadership qualities.
+    - Output: Return ONLY the body of the cover letter in Markdown format. Do not include placeholders like "[Your Name]" if the name is available in the resume.`;
+
+    const response = await ai.models.generateContent({
+      model: IMPROVEMENT_MODEL,
+      contents: prompt
+    });
+
+    return response.text || "Could not generate cover letter.";
+  } catch (error: any) {
+    const friendlyError = handleGeminiError(error);
+    return `Error generating cover letter.\n\n${friendlyError}`;
   }
 };

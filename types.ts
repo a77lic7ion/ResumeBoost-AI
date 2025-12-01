@@ -48,6 +48,15 @@ export interface AnalysisResult {
   };
 }
 
+export interface JobAnalysisResult {
+  roleTitle: string;
+  keywords: string[];
+  hardSkills: string[];
+  softSkills: string[];
+  responsibilities: string[];
+  cultureFit: string;
+}
+
 export interface SavedSession {
   id: string;
   name: string;

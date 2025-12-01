@@ -1,14 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import ResumeInput from './components/ResumeInput';
 import Dashboard from './components/Dashboard';
 import ImprovementPanel from './components/ImprovementPanel';
 import SettingsModal from './components/SettingsModal';
 import LandingFeatures from './components/LandingFeatures';
+import PricingSection from './components/PricingSection';
 import { calculateAtsScore } from './utils/atsLogic';
 import { analyzeWithGemini } from './services/geminiService';
 import { AnalysisResult, SavedSession } from './types';
-import { FileText, Github, Moon, Sun, Settings } from 'lucide-react';
+import { Settings, Moon, Sun, Github } from 'lucide-react';
 import { saveSession, generateId } from './utils/storage';
 
 const App: React.FC = () => {
@@ -20,18 +20,14 @@ const App: React.FC = () => {
   const [showImprovementPanel, setShowImprovementPanel] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  
-  // Track current session ID for updates
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
-  // Initialize theme based on system preference or default to dark (modern look)
   useEffect(() => {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       setDarkMode(true);
     }
   }, []);
 
-  // Toggle 'dark' class on html element
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -44,12 +40,9 @@ const App: React.FC = () => {
     setIsProcessing(true);
     setResumeText(text);
     setProfileImage(image);
-    setCurrentSessionId(generateId()); // New session
+    setCurrentSessionId(generateId());
 
-    // 1. Local Algo Scoring
     const { score, issues } = calculateAtsScore(text);
-    
-    // 2. Gemini AI Analysis
     const aiData = await analyzeWithGemini(text);
 
     setAnalysisResult({
@@ -72,11 +65,8 @@ const App: React.FC = () => {
 
   const handleSave = () => {
     if (!analysisResult || !resumeText || !currentSessionId) return;
-    
-    // Use the first line or AI summary as the name, fallbacks to "Resume"
     let name = "Untitled Resume";
     if (analysisResult.aiAnalysis?.summary) {
-        // Take first 5 words of summary
         name = analysisResult.aiAnalysis.summary.split(' ').slice(0, 5).join(' ') + '...';
     } else {
         name = `Resume - ${new Date().toLocaleDateString()}`;
@@ -97,103 +87,127 @@ const App: React.FC = () => {
 
   const handleUpdateOriginal = (newText: string) => {
       setResumeText(newText);
-      // Re-run standard checks locally, but keep AI data to avoid cost/delay unless explicit re-analyze requested
       const { score, issues } = calculateAtsScore(newText);
       setAnalysisResult(prev => prev ? { ...prev, score, issues } : null);
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden selection:bg-primary selection:text-white">
+    <div className="gradient-bg min-h-screen flex flex-col selection:bg-primary selection:text-white">
       
-      {/* Animated Background Blobs */}
-      <div className="absolute top-0 left-0 -translate-x-1/4 -translate-y-1/4 w-96 h-96 bg-primary/20 dark:bg-primary/10 rounded-full filter blur-3xl opacity-50 animate-float-1 pointer-events-none"></div>
-      <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 w-[28rem] h-[28rem] bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full filter blur-3xl opacity-60 animate-float-2 pointer-events-none"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[32rem] h-[32rem] bg-sky-500/10 dark:bg-sky-500/10 rounded-full filter blur-3xl opacity-40 animate-float-3 pointer-events-none"></div>
-
-      <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Navbar */}
-        <header className="py-6 px-4 sm:px-6 lg:px-8">
-          <div className="container mx-auto max-w-7xl flex justify-between items-center">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentStep('upload')}>
-              <div className="bg-primary p-2 rounded-lg shadow-lg shadow-primary/20">
-                <FileText size={24} className="text-white" />
-              </div>
-              <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                ResumeBoost AI
-              </span>
+      {/* Header */}
+      <header className="container mx-auto px-6 py-4">
+        <nav className="flex items-center justify-between">
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentStep('upload')}>
+                <span className="bg-primary p-2 rounded-lg">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
+                </span>
+                <span className="font-bold text-xl text-gray-900 dark:text-white">ResumeBoost AI</span>
             </div>
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setDarkMode(!darkMode)}
-                className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400"
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-              <button 
-                onClick={() => setShowSettings(true)}
-                className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400"
-                title="Settings"
-              >
-                <Settings size={20} />
-              </button>
-              <a href="#" className="text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">
-                  <Github size={20} />
-              </a>
+            
+            <div className="hidden md:flex items-center space-x-8">
+                <button onClick={() => setCurrentStep('upload')} className="text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors">Features</button>
+                <button onClick={() => setCurrentStep('upload')} className="text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors">Pricing</button>
+                <button className="text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors">About</button>
             </div>
-          </div>
-        </header>
 
-        {/* Main Content */}
-        <main className="flex-grow py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-          <div className="container mx-auto max-w-7xl">
-            {currentStep === 'upload' ? (
-              <div className="animate-fade-in-up">
-                <section className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight">
-                    Beat the ATS with <span className="text-primary">AI Precision</span>
-                  </h1>
-                  <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                    Get an instant ATS score, uncover hidden issues, and rewrite your resume with Gemini 2.5 Flash to land more interviews.
-                  </p>
-                </section>
-                
-                <div className="max-w-6xl mx-auto">
-                  <ResumeInput 
-                    onAnalyze={handleAnalyze} 
-                    onLoadSession={handleLoadSession}
-                    isProcessing={isProcessing} 
-                  />
-                </div>
-                
-                {/* New Features Section */}
-                <LandingFeatures />
+            <div className="flex items-center space-x-4">
+                 <button 
+                    onClick={() => setDarkMode(!darkMode)}
+                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
+                >
+                    {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                </button>
+                <button 
+                    onClick={() => setShowSettings(true)}
+                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
+                >
+                    <Settings size={20} />
+                </button>
 
-              </div>
-            ) : (
-              <div className="animate-fade-in-up">
-                <div className="mb-8 flex items-center justify-between">
-                    <button 
-                      onClick={() => setCurrentStep('upload')}
-                      className="text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary font-medium flex items-center gap-2 transition-colors"
-                    >
-                      &larr; Analyze Another
-                    </button>
-                </div>
-                
-                {analysisResult && (
-                  <Dashboard 
-                    analysis={analysisResult} 
-                    onImproveClick={() => setShowImprovementPanel(true)} 
-                    onSave={handleSave}
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        </main>
+                <a href="#" className="hidden sm:block text-sm font-semibold hover:text-primary dark:hover:text-gray-300 transition-colors">Sign In</a>
+                <button className="gradient-btn text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all">
+                    Get Started
+                </button>
+            </div>
+        </nav>
+      </header>
 
-        {/* Improvement Modal */}
-        {showImprovementPanel && (
+      {/* Main Content */}
+      <main className="flex-grow">
+         {currentStep === 'upload' ? (
+             <div className="animate-fade-in-up">
+                 {/* Hero Section */}
+                 <div className="container mx-auto px-6 pt-12 pb-24">
+                    <div className="grid md:grid-cols-2 gap-12 items-center">
+                        <div className="order-2 md:order-1 text-center md:text-left">
+                            <h1 className="text-4xl md:text-6xl font-bold leading-tight text-gray-900 dark:text-white">
+                                Elevate Your Career with AI-Powered Resume Optimization
+                            </h1>
+                            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
+                                Unlock ATS insights, improve your score, and land more interviews instantly with Gemini 2.5 Flash.
+                            </p>
+                        </div>
+                        <div className="order-1 md:order-2 flex justify-center">
+                             <img 
+                                alt="Illustration of a resume document transformed into a circuit board with an AI chip at its center" 
+                                className="w-full max-w-md mx-auto drop-shadow-2xl" 
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5BCopRsNZm1CJtk_uct6fhct4ZuTgGA5jOXyIhoT4Ns4oPfukhuK4q9miRvNVRK-eFxGtYRsItlIPb-Vmf_9iG4Q_aPXP8zv6htHRWaiZUQ2KTyd5joHXfHXucnzXcosoT9t93hHkd62_8bPig2Md0gitTOYLF-cDhN2-nZIfp1RKrBPX8QGqOXdUCj5L1vCc1ZWK_BMhLVjoMLV8SI-5Uf7jCApJwp8iTgCOJmzxFVfswXur8bpGq51pnD05isgvm2yDxO7UhfM"
+                             />
+                        </div>
+                    </div>
+
+                    <div className="mt-16">
+                         <ResumeInput 
+                            onAnalyze={handleAnalyze} 
+                            onLoadSession={handleLoadSession}
+                            isProcessing={isProcessing} 
+                         />
+                    </div>
+                 </div>
+
+                 <LandingFeatures />
+                 <PricingSection />
+             </div>
+         ) : (
+             <div className="container mx-auto px-6 py-12 animate-fade-in-up">
+                  <div className="mb-8">
+                     <button 
+                       onClick={() => setCurrentStep('upload')}
+                       className="text-gray-500 hover:text-primary dark:text-gray-400 font-medium flex items-center gap-2 transition-colors mb-4"
+                     >
+                       <span className="material-symbols-outlined">arrow_back</span> Analyze Another
+                     </button>
+                     {analysisResult && (
+                        <Dashboard 
+                            analysis={analysisResult} 
+                            onImproveClick={() => setShowImprovementPanel(true)} 
+                            onSave={handleSave}
+                        />
+                     )}
+                  </div>
+             </div>
+         )}
+      </main>
+
+      {/* Footer */}
+      <footer className="py-8 px-6 border-t border-gray-200 dark:border-zinc-800 bg-background-light dark:bg-background-dark">
+        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+             <div className="flex items-center gap-2">
+                <span className="bg-primary/10 p-1.5 rounded-lg">
+                   <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
+                </span>
+                <span className="font-bold text-gray-900 dark:text-white">ResumeBoost AI</span>
+             </div>
+             <p className="text-sm text-gray-500 dark:text-gray-400">
+                © {new Date().getFullYear()} ResumeBoost AI. Powered by Google Gemini.
+             </p>
+             <div className="flex gap-4">
+                <a href="#" className="text-gray-500 hover:text-primary transition-colors"><Github size={20} /></a>
+             </div>
+        </div>
+      </footer>
+
+      {showImprovementPanel && (
           <ImprovementPanel 
             originalText={resumeText} 
             analysisResult={analysisResult}
@@ -203,20 +217,9 @@ const App: React.FC = () => {
           />
         )}
 
-        {/* Settings Modal */}
-        {showSettings && (
+      {showSettings && (
           <SettingsModal onClose={() => setShowSettings(false)} />
-        )}
-
-        {/* Footer */}
-        <footer className="py-8 px-4 sm:px-6 lg:px-8 mt-auto border-t border-slate-200 dark:border-slate-800">
-          <div className="container mx-auto max-w-7xl text-center">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              © {new Date().getFullYear()} @Created by AfflictedAI. Powered by Google Gemini.
-            </p>
-          </div>
-        </footer>
-      </div>
+      )}
     </div>
   );
 };

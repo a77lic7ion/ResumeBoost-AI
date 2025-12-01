@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ResumeBoost AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -12,26 +13,19 @@
         theme: {
           extend: {
             colors: {
-              primary: "#f97316", // orange-500
-              "primary-hover": "#ea580c", // orange-600
-              "background-light": "#f8fafc", // slate-50
-              "background-dark": "#0f172a", // slate-900
+              primary: "#2563EB", // Blue-600
+              "primary-hover": "#1d4ed8", // Blue-700
+              "background-light": "#F9FAFB", // Gray-50
+              "background-dark": "#0A0A0A", // Zinc-950
             },
             fontFamily: {
-              sans: ["Inter", "sans-serif"],
-              display: ["Inter", "sans-serif"],
+              sans: ["Sora", "sans-serif"],
+              display: ["Sora", "sans-serif"],
             },
             animation: {
-              'float-1': 'float 6s ease-in-out infinite',
-              'float-2': 'float 7s ease-in-out infinite reverse',
-              'float-3': 'float 8s ease-in-out infinite',
               'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
             },
             keyframes: {
-              float: {
-                '0%, 100%': { transform: 'translateY(0px)' },
-                '50%': { transform: 'translateY(-20px)' },
-              },
               fadeInUp: {
                 '0%': { opacity: '0', transform: 'translateY(10px)' },
                 '100%': { opacity: '1', transform: 'translateY(0)' },
@@ -42,7 +36,7 @@
       }
     </script>
     <style>
-      /* Custom scrollbar for better aesthetics */
+      /* Custom scrollbar */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -55,20 +49,36 @@
         border-radius: 4px;
       }
       .dark ::-webkit-scrollbar-thumb {
-        background: #475569;
+        background: #27272a;
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
       }
+
+      .gradient-bg {
+        background: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.1), transparent 30%), radial-gradient(circle at 80% 80%, rgba(249, 115, 22, 0.1), transparent 30%);
+      }
+      .dark .gradient-bg {
+        background: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.2), transparent 40%), radial-gradient(circle at 80% 80%, rgba(249, 115, 22, 0.15), transparent 40%);
+      }
       
+      .gradient-btn {
+        background: linear-gradient(90deg, #2563EB 50%, #F97316 50%);
+        background-size: 200% 100%;
+        transition: background-position 0.3s ease-in-out;
+      }
+      .gradient-btn:hover {
+        background-position: -100% 0;
+      }
+
       .glass-effect {
-        background: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
       }
       .dark .glass-effect {
-        background: rgba(15, 23, 42, 0.6);
-        border-color: rgba(51, 65, 85, 0.5);
+        background: rgba(24, 24, 27, 0.7); /* Zinc-900 with opacity */
+        border-color: rgba(63, 63, 70, 0.5);
       }
 
       /* Markdown Content Styles */
@@ -78,15 +88,15 @@
         font-weight: 700;
         line-height: 1.2;
       }
-      .prose h1 { font-size: 1.75em; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.2em; }
-      .prose h2 { font-size: 1.5em; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.2em; }
+      .prose h1 { font-size: 1.75em; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.2em; }
+      .prose h2 { font-size: 1.5em; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.2em; }
       .prose h3 { font-size: 1.25em; }
       .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
       .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
       .prose p { margin-bottom: 1em; line-height: 1.6; }
       .prose strong { font-weight: 700; }
       
-      .dark .prose h1, .dark .prose h2 { border-color: #334155; }
+      .dark .prose h1, .dark .prose h2 { border-color: #3f3f46; }
     </style>
   <script type="importmap">
 {
@@ -105,7 +115,7 @@
 }
 </script>
 </head>
-  <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased font-sans transition-colors duration-300">
+  <body class="bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 antialiased font-sans transition-colors duration-300">
     <div id="root"></div>
   </body>
 </html>

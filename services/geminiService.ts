@@ -7,6 +7,22 @@ const ANALYSIS_MODEL = "gemini-2.5-flash";
 const IMPROVEMENT_MODEL = "gemini-2.5-flash";
 const VISION_MODEL = "gemini-2.5-flash"; // Supports PDF and Images
 
+// Helper: Centralized Error Handler
+const handleGeminiError = (error: any): string => {
+  console.error("Gemini Service Error:", error);
+  const msg = error.toString().toLowerCase();
+  
+  if (error.status === 403 || msg.includes('403') || msg.includes('permission denied')) {
+    return "Access Denied (Error 403).\n\nPossible fixes:\n1. In Google Cloud Console, ensure 'Generative Language API' is ENABLED.\n2. Check 'API Key Restrictions'. If using Vercel, add your production domain to the allowed referrers or remove strict browser restrictions.\n3. Verify billing is active for this project.";
+  }
+  
+  if (msg.includes('fetch failed') || msg.includes('network')) {
+    return "Network Error. Please check your internet connection.";
+  }
+  
+  return error.message || "An unexpected error occurred with the AI service.";
+};
+
 // Helper to safely access env vars in browser or node
 const getEnvApiKey = () => {
   let key = undefined;
@@ -21,7 +37,7 @@ const getEnvApiKey = () => {
       else if (import.meta.env.API_KEY) key = import.meta.env.API_KEY;
     }
   } catch (e) {
-    // Ignore syntax errors in environments that don't support import.meta
+    // Ignore syntax errors
   }
 
   // 2. Check Node/Process standard (process.env)
@@ -62,23 +78,20 @@ const getAI = (): GoogleGenAI => {
 
 /**
  * Validates a provided API key by making a minimal request.
+ * Returns an object indicating validity and any error message.
  */
-export const validateApiKey = async (apiKey: string): Promise<boolean> => {
+export const validateApiKey = async (apiKey: string): Promise<{ isValid: boolean; error?: string }> => {
   try {
     const cleanKey = apiKey.trim().replace(/^["']|["']$/g, '');
     const ai = new GoogleGenAI({ apiKey: cleanKey });
     // Simple prompt to test connectivity
     await ai.models.generateContent({
       model: ANALYSIS_MODEL,
-      contents: "Test connection",
+      contents: "Test",
     });
-    return true;
+    return { isValid: true };
   } catch (error: any) {
-    console.error("API Key Validation Error:", error);
-    if (error.status === 403 || (error.message && error.message.includes('403'))) {
-      console.error("Permission Denied: Please check if the API Key is valid and the API is enabled in Google Cloud Console.");
-    }
-    return false;
+    return { isValid: false, error: handleGeminiError(error) };
   }
 };
 
@@ -107,11 +120,8 @@ export const extractTextFromMultimodal = async (base64Data: string, mimeType: st
     
     return response.text || "";
   } catch (error: any) {
-    console.error("Gemini Extraction Error:", error);
-    if (error.status === 403 || (error.toString().includes('403'))) {
-      throw new Error("Permission Denied: Your API Key is invalid or does not have access to the Gemini API.");
-    }
-    throw new Error("Failed to extract text from file. Please check your API Key.");
+    const friendlyError = handleGeminiError(error);
+    throw new Error(friendlyError);
   }
 };
 
@@ -149,16 +159,11 @@ export const analyzeWithGemini = async (resumeText: string): Promise<NonNullable
     
     return JSON.parse(jsonText);
   } catch (error: any) {
-    console.error("Gemini Analysis Error:", error);
+    const friendlyError = handleGeminiError(error);
     
-    let errorMessage = "AI Analysis unavailable. Please check your API Key settings.";
-    if (error.status === 403 || (error.toString().includes('403'))) {
-      errorMessage = "Error 403: Permission Denied. Check your API Key.";
-    }
-
     // Fallback in case of API failure to prevent app crash
     return {
-      summary: errorMessage,
+      summary: `Analysis Failed: ${friendlyError}`,
       strengths: ["Analysis Failed"],
       missingKeywords: ["N/A"],
       toneCheck: "N/A"
@@ -197,10 +202,7 @@ export const improveResumeContent = async (originalText: string, specificInstruc
 
     return response.text || "Could not generate improvement.";
   } catch (error: any) {
-    console.error("Gemini Improvement Error:", error);
-    if (error.status === 403 || (error.toString().includes('403'))) {
-      return "Error: Permission Denied. Please check your API Key in Settings.";
-    }
-    return "Error generating improvements. Please check your API key and try again.";
+    const friendlyError = handleGeminiError(error);
+    return `Error generating improvements.\n\n${friendlyError}`;
   }
 };

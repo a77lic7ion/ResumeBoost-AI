@@ -58,14 +58,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
     setTestStatus('idle');
     setErrorMessage('');
 
-    const isValid = await validateApiKey(keyToTest);
+    const result = await validateApiKey(keyToTest);
 
     setIsTestLoading(false);
-    if (isValid) {
+    if (result.isValid) {
       setTestStatus('success');
     } else {
       setTestStatus('error');
-      setErrorMessage("Connection failed. Key is invalid or lacks permissions (Error 403).");
+      setErrorMessage(result.error || "Connection failed. Check permissions.");
     }
   };
 
@@ -136,7 +136,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
           {testStatus === 'error' && (
             <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg flex items-start gap-2 text-sm text-red-700 dark:text-red-300">
               <AlertCircle size={16} className="shrink-0 mt-0.5" /> 
-              <span>{errorMessage}</span>
+              <span className="whitespace-pre-wrap">{errorMessage}</span>
             </div>
           )}
 

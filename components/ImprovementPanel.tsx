@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { improveResumeContent } from '../services/geminiService';
-import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2, StopCircle, Lightbulb, PenTool, ChevronDown, PlusCircle } from 'lucide-react';
+import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2, StopCircle, Lightbulb, PenTool, ChevronDown, PlusCircle, Search } from 'lucide-react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { diffWords } from 'diff';
@@ -300,44 +300,76 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
   
   const getSmartSuggestions = () => {
     const suggestions = [];
-    
-    // Default suggestion
-    suggestions.push({
-      label: "Professional Tone",
-      prompt: "Rewrite the resume to sound more senior, authoritative, and result-oriented. Remove passive language.",
-      icon: <Sparkles size={14} className="text-purple-500" />
-    });
 
-    // Use initial analysis for these general suggestions as they are qualitative
-    if (analysisResult?.score) {
-      const { impact, keywords, content } = analysisResult.score.breakdown;
+    // 1. Critical Issues based suggestions (Real-time from localIssues)
+    const hasLowImpact = localIssues.some(i => i.category === 'impact');
+    const hasMissingSummary = localIssues.some(i => i.id === 'missing-summary');
+    const hasWeakSkills = localIssues.some(i => i.id === 'weak-skills');
+    const hasBuzzwords = localIssues.some(i => i.id === 'buzzwords');
 
-      if (impact < 10) {
+    if (hasLowImpact) {
         suggestions.push({
           label: "Quantify Impact",
-          prompt: "Identify areas in the Experience section where specific numbers, percentages, or dollar amounts can be inferred or added. Rewrite bullet points to emphasize results over tasks.",
+          prompt: "Identify areas in the Experience section where specific numbers, percentages, or dollar amounts can be inferred or added to demonstrate value. Rewrite bullet points to emphasize results over duties.",
           icon: <Layers size={14} className="text-blue-500" />
         });
-      }
-
-      if (keywords < 10) {
-        const missing = analysisResult.aiAnalysis?.missingKeywords.slice(0, 3).join(', ') || "industry keywords";
-        suggestions.push({
-          label: "Boost Keywords",
-          prompt: `Rewrite the Skills and Experience sections to naturally incorporate these missing keywords: ${missing}. Ensure they fit the context of the role.`,
-          icon: <Wand2 size={14} className="text-green-500" />
-        });
-      }
-
-      if (content < 15) {
-         suggestions.push({
-            label: "Fix Formatting",
-            prompt: "Standardize the resume formatting. Ensure all dates, locations, and titles are consistent. Fix any spacing issues.",
-            icon: <LayoutTemplate size={14} className="text-orange-500" />
-         });
-      }
     }
-    return suggestions;
+
+    if (hasMissingSummary) {
+        suggestions.push({
+            label: "Write Summary",
+            prompt: "Generate a compelling 2-3 sentence professional summary for the top of the resume. Highlight key years of experience, core competencies, and career objectives.",
+            icon: <PenTool size={14} className="text-orange-500" />
+        });
+    }
+
+    if (hasWeakSkills) {
+        suggestions.push({
+            label: "Optimize Skills",
+            prompt: "Rewrite the Skills section to categorize technical and soft skills clearly. Ensure high-priority keywords are listed first.",
+            icon: <Wand2 size={14} className="text-green-500" />
+        });
+    }
+
+    if (hasBuzzwords) {
+        suggestions.push({
+            label: "Remove Buzzwords",
+            prompt: "Identify and remove generic buzzwords (like 'hard worker', 'team player') and replace them with specific examples or action-oriented language.",
+            icon: <AlertTriangle size={14} className="text-red-500" />
+        });
+    }
+
+    // 2. Fallback/Additions from Analysis Result (Deep Analysis)
+    if (analysisResult?.aiAnalysis?.missingKeywords && analysisResult.aiAnalysis.missingKeywords.length > 0) {
+         // Only add if we haven't suggested too many things yet
+         if (suggestions.length < 3) {
+             const missing = analysisResult.aiAnalysis.missingKeywords.slice(0, 3).join(', ');
+             suggestions.push({
+                label: "Add Keywords",
+                prompt: `Rewrite the experience section to naturally incorporate these missing industry keywords: ${missing}.`,
+                icon: <Search size={14} className="text-purple-500" />
+             });
+         }
+    }
+    
+    // 3. Always available standard suggestions if list is short
+    if (suggestions.length < 3) {
+        suggestions.push({
+          label: "Polish Tone",
+          prompt: "Rewrite the resume to sound more senior, authoritative, and result-oriented. Remove passive language and ensure strong action verbs are used.",
+          icon: <Sparkles size={14} className="text-indigo-500" />
+        });
+    }
+    
+     if (suggestions.length < 3) {
+        suggestions.push({
+            label: "Fix Formatting",
+             prompt: "Standardize formatting: ensure all dates are aligned, bullet points are consistent, and section headers are clear.",
+            icon: <LayoutTemplate size={14} className="text-gray-500" />
+        });
+    }
+
+    return suggestions.slice(0, 4); // Limit to top 4
   };
 
   const suggestions = getSmartSuggestions();

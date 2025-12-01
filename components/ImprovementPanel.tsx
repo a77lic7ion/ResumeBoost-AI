@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { improveResumeContent } from '../services/geminiService';
-import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2, StopCircle, Lightbulb, PenTool } from 'lucide-react';
+import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2, StopCircle, Lightbulb, PenTool, ChevronDown } from 'lucide-react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { diffWords } from 'diff';
@@ -65,9 +65,10 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
   const [progress, setProgress] = useState(0); 
   const [copied, setCopied] = useState(false);
   const [prompt, setPrompt] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('diff');
+  const [viewMode, setViewMode] = useState<ViewMode>('edit');
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('modern');
   const [longRunning, setLongRunning] = useState(false);
+  const [showIssuesList, setShowIssuesList] = useState(false);
   
   const abortControllerRef = useRef<AbortController | null>(null);
   const [previousVersion, setPreviousVersion] = useState(originalText);
@@ -131,7 +132,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
         }
         
         setImprovedText(result);
-        setViewMode('diff'); 
+        if (!customPrompt) setViewMode('diff'); 
     } catch (e) {
         if (currentSignal.aborted) return;
         console.error(e);
@@ -341,9 +342,9 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                          </div>
                     )}
 
-                    {/* Critical Issues Section */}
-                    {criticalIssues.length > 0 && (
-                      <div className="animate-fade-in-up">
+                    {/* Sidebar Critical Issues List (Visible only if inline is hidden or on mobile) */}
+                    {criticalIssues.length > 0 && !showIssuesList && (
+                      <div className="animate-fade-in-up md:hidden">
                         <label className="block text-xs font-bold uppercase tracking-wider text-red-500 dark:text-red-400 mb-3 flex items-center gap-2">
                           <AlertTriangle size={14} /> Critical Fixes
                         </label>
@@ -424,13 +425,45 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                     </div>
                 </div>
 
-                {/* Inline Critical Alert Banner */}
+                {/* Inline Critical Alert Banner (Updated) */}
                 {viewMode === 'edit' && criticalIssues.length > 0 && (
-                   <div className="bg-red-50 dark:bg-red-900/10 border-b border-red-100 dark:border-red-900/30 px-6 py-3 flex items-center gap-3">
-                      <AlertTriangle size={16} className="text-red-500 shrink-0" />
-                      <span className="text-xs text-red-700 dark:text-red-400 font-medium flex-1">
-                         {criticalIssues.length} critical issues detected. Use the <span className="font-bold">Critical Fixes</span> in the sidebar to resolve them.
-                      </span>
+                   <div className="bg-red-50 dark:bg-red-900/10 border-b border-red-200 dark:border-red-900/30">
+                        <div className="px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors" onClick={() => setShowIssuesList(!showIssuesList)}>
+                             <div className="flex items-center gap-3">
+                                 <div className="p-1.5 bg-red-100 dark:bg-red-900/50 rounded-full text-red-600 dark:text-red-400">
+                                     <AlertTriangle size={16} />
+                                 </div>
+                                 <span className="text-sm text-red-800 dark:text-red-200 font-bold">
+                                     {criticalIssues.length} Critical Issues Detected
+                                 </span>
+                             </div>
+                             <div className="flex items-center gap-3">
+                                <span className="text-xs text-red-500 dark:text-red-400 font-medium hidden sm:block">Click to view & fix</span>
+                                <ChevronDown size={16} className={`text-red-500 transition-transform ${showIssuesList ? 'rotate-180' : ''}`} />
+                             </div>
+                        </div>
+                        
+                        {showIssuesList && (
+                            <div className="px-6 pb-4 space-y-2 animate-fade-in-up bg-red-50/50 dark:bg-red-900/10">
+                                {criticalIssues.map(issue => (
+                                    <div key={issue.id} className="flex flex-col sm:flex-row items-start gap-3 p-3 bg-white dark:bg-zinc-800 rounded-lg border border-red-100 dark:border-red-900/30 shadow-sm">
+                                        <div className="flex-1">
+                                             <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 uppercase tracking-wider">{issue.severity}</span>
+                                                <p className="text-xs font-bold text-gray-900 dark:text-white">{issue.message}</p>
+                                             </div>
+                                             <p className="text-xs text-gray-600 dark:text-gray-400">{issue.remediation}</p>
+                                        </div>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleImprove(`Fix this issue: ${issue.message}. ${issue.remediation}`); }}
+                                            className="text-[10px] font-bold bg-primary/10 hover:bg-primary/20 text-primary px-3 py-2 rounded transition-colors flex items-center gap-1 whitespace-nowrap"
+                                        >
+                                            <Wand2 size={12} /> Auto-Fix
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                    </div>
                 )}
 

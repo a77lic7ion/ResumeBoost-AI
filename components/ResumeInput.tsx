@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import * as mammoth from 'mammoth';
-import { extractTextFromMultimodal } from '../services/geminiService';
+import { extractTextFromMultimodal } from '../services/aiService';
 import { getSessions, deleteSession } from '../utils/storage';
 import { SavedSession } from '../types';
 import { Loader2, Trash2, AlertCircle, Camera, Image as ImageIcon, X, Link as LinkIcon, CheckCircle2, HelpCircle } from 'lucide-react';

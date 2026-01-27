@@ -73,8 +73,18 @@ export interface SavedSession {
   profileImage?: string;
 }
 
+export type AiProvider = 'gemini' | 'claude' | 'mistral' | 'grok' | 'ollama';
+
+export interface AiModel {
+  id: string;
+  name: string;
+}
+
 export interface UserSettings {
+  provider: AiProvider;
   apiKey?: string;
+  modelId?: string;
+  ollamaUrl?: string;
   theme?: 'light' | 'dark' | 'system';
 }
 

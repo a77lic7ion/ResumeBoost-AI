@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { analyseJobDescription } from '../services/geminiService';
+import { analyseJobDescription } from '../services/aiService';
 import { JobAnalysisResult } from '../types';
 import { Search, Briefcase, Zap, Brain, ListChecks, Loader2, ArrowRight } from 'lucide-react';
 

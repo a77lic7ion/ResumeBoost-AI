@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { improveResumeContent } from '../services/geminiService';
+import { improveResumeContent } from '../services/aiService';
 import { Wand2, X, Copy, Check, Eye, Code, FileDown, Download, Layers, LayoutTemplate, ArrowRight, AlertTriangle, Sparkles, Loader2, StopCircle, Lightbulb, PenTool, ChevronDown, PlusCircle, Search, Mail, Phone, Link as LinkIcon } from 'lucide-react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';

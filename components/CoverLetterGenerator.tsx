@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { generateCoverLetter } from '../services/geminiService';
+import { generateCoverLetter } from '../services/aiService';
 import { PenTool, FileText, Loader2, Copy, Check, Download, CheckCircle2 } from 'lucide-react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';

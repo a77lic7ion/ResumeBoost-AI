@@ -49,10 +49,15 @@ export const generateId = () => {
 export const getSettings = (): UserSettings => {
   try {
     const json = localStorage.getItem(SETTINGS_KEY);
-    return json ? JSON.parse(json) : {};
+    const defaults: UserSettings = {
+      provider: 'gemini',
+      ollamaUrl: 'http://localhost:11434',
+      theme: 'system'
+    };
+    return json ? { ...defaults, ...JSON.parse(json) } : defaults;
   } catch (error) {
     console.error("Failed to load settings", error);
-    return {};
+    return { provider: 'gemini', ollamaUrl: 'http://localhost:11434' };
   }
 };
 

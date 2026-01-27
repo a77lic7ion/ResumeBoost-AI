@@ -8,7 +8,7 @@ import PricingSection from './components/PricingSection';
 import JobAnalyser from './components/JobAnalyser';
 import CoverLetterGenerator from './components/CoverLetterGenerator';
 import { calculateAtsScore } from './utils/atsLogic';
-import { analyseWithGemini } from './services/geminiService';
+import { analyseWithAi } from './services/aiService';
 import { AnalysisResult, SavedSession } from './types';
 import { Settings, Moon, Sun, Github, FileText, Briefcase, PenTool } from 'lucide-react';
 import { saveSession, generateId } from './utils/storage';
@@ -48,7 +48,7 @@ const App: React.FC = () => {
     setCurrentSessionId(generateId());
 
     const { score, issues } = calculateAtsScore(text);
-    const aiData = await analyseWithGemini(text);
+    const aiData = await analyseWithAi(text);
 
     setAnalysisResult({
       score,

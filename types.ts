@@ -69,7 +69,8 @@ export interface UserSettings {
   apiKey?: string;
   theme?: 'light' | 'dark' | 'system';
   preferredProvider?: IntelligenceProvider;
-  preferredEngine?: string;
+  analysisModel?: string;
+  enhancementModel?: string;
 }
 
 export interface SavedSession {

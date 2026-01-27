@@ -1,37 +1,32 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnalysisResult, JobAnalysisResult, IntelligenceProvider } from "../types";
+import { AnalysisResult, JobAnalysisResult, UserSettings } from "../types";
 import { getSettings } from "../utils/storage";
 
-// Using the provided Gemini 3 series for maximum intelligence
-const ANALYSIS_ENGINE = "gemini-3-flash-preview";
-const ENHANCEMENT_ENGINE = "gemini-3-pro-preview";
+const DEFAULT_ANALYSIS_MODEL = "gemini-3-flash-preview";
+const DEFAULT_ENHANCEMENT_MODEL = "gemini-3-pro-preview";
 const VISION_ENGINE = "gemini-2.5-flash-image"; 
 
 const handleServiceError = (error: any): string => {
   console.error("Intelligence Service Error:", error);
+  if (error.message?.includes("entity was not found")) {
+    return "The selected model or project was not found. Please re-select your API key.";
+  }
   return error.message || "A background service error occurred.";
 };
 
 const getAI = (): GoogleGenAI => {
+  // Always create a new instance to ensure we use the most up-to-date injected key
   return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
-/**
- * Prefetches the model status (simulated as we use the injected API key)
- */
-export const prefetchEngines = async () => {
-  console.debug("Prefetching Intelligent Engines...");
-  // In a multi-provider setup, we would verify connectivity here.
-};
-
-// Removed unused parameter to align with external API key management guidelines
 export const validateApiKey = async (): Promise<{ isValid: boolean; error?: string }> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const settings = getSettings();
+    const model = settings.analysisModel || DEFAULT_ANALYSIS_MODEL;
+    const ai = getAI();
     await ai.models.generateContent({
-      model: ANALYSIS_ENGINE,
-      contents: "Service ping",
+      model: model,
+      contents: "Service connectivity test.",
     });
     return { isValid: true };
   } catch (error: any) {
@@ -67,9 +62,11 @@ export const extractTextFromMultimodal = async (base64Data: string, mimeType: st
 
 export const analyseWithIntelligence = async (cvText: string): Promise<NonNullable<AnalysisResult['aiAnalysis']>> => {
   try {
+    const settings = getSettings();
+    const model = settings.analysisModel || DEFAULT_ANALYSIS_MODEL;
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: ANALYSIS_ENGINE,
+      model: model,
       contents: `Analyse this South African CV. 
       1. Provide a 2-sentence professional summary in UK/SA English.
       2. List 3-5 core strengths based on the content.
@@ -122,9 +119,11 @@ export const analyseWithIntelligence = async (cvText: string): Promise<NonNullab
 
 export const enhanceCVContent = async (originalText: string, instruction: string): Promise<string> => {
   try {
+    const settings = getSettings();
+    const model = settings.enhancementModel || DEFAULT_ENHANCEMENT_MODEL;
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: ENHANCEMENT_ENGINE,
+      model: model,
       contents: `Refine this South African CV content based on: ${instruction}. 
       Use UK/SA English spelling (e.g., 'optimise', 'programme'). Use strong action verbs and quantifiable metrics.
       
@@ -140,9 +139,11 @@ export const enhanceCVContent = async (originalText: string, instruction: string
 
 export const analyseJobDescription = async (jd: string): Promise<JobAnalysisResult> => {
   try {
+    const settings = getSettings();
+    const model = settings.analysisModel || DEFAULT_ANALYSIS_MODEL;
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: ANALYSIS_ENGINE,
+      model: model,
       contents: `Analyse this South African Job Description: ${jd}`,
       config: {
         responseMimeType: "application/json",
@@ -168,9 +169,11 @@ export const analyseJobDescription = async (jd: string): Promise<JobAnalysisResu
 
 export const generateProfessionalLetter = async (cv: string, jd?: string): Promise<string> => {
   try {
+    const settings = getSettings();
+    const model = settings.enhancementModel || DEFAULT_ENHANCEMENT_MODEL;
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: ENHANCEMENT_ENGINE,
+      model: model,
       contents: `Write a professional cover letter for a South African job application. 
       CV: ${cv}. Job Details: ${jd || "General application"}. Use UK English spelling.`
     });

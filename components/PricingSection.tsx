@@ -25,7 +25,7 @@ const PricingSection: React.FC = () => {
                         </li>
                         <li className="flex items-start">
                         <span className="material-symbols-outlined text-green-500 mt-1">check_circle</span>
-                        <span className="ml-3 text-gray-600 dark:text-gray-300">AI-Powered Resume Builder</span>
+                        <span className="ml-3 text-gray-600 dark:text-gray-300">Intelligent Resume Architect</span>
                         </li>
                         <li className="flex items-start">
                         <span className="material-symbols-outlined text-green-500 mt-1">check_circle</span>
@@ -61,7 +61,7 @@ const PricingSection: React.FC = () => {
                         </li>
                         <li className="flex items-start">
                         <span className="material-symbols-outlined text-green-500 mt-1">check_circle</span>
-                        <span className="ml-3 text-gray-600 dark:text-gray-300">AI-Powered Resume Builder</span>
+                        <span className="ml-3 text-gray-600 dark:text-gray-300">Intelligent Resume Architect</span>
                         </li>
                         <li className="flex items-start">
                         <span className="material-symbols-outlined text-green-500 mt-1">check_circle</span>

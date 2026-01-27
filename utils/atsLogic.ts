@@ -12,6 +12,13 @@ const PATTERNS = {
     summary: /summary|objective|profile|about/i,
     projects: /projects/i,
     certifications: /certifications|courses/i,
+    languages: /languages|linguistic/i,
+    references: /references|referees/i,
+  },
+  saSpecific: {
+    idNumber: /(\b\d{13}\b|ID available on request|Identity Number available)/i,
+    driversLicense: /driver'?s\s+licen[sc]e|code\s+[a-z0-9]/i,
+    nationality: /nationality|citizen/i,
   },
   dates: /(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\s+\d{4}|\d{2}\/\d{4}|\d{4}/i,
   // Stricter quantifier check: looks for number followed by word, or specific metric keywords
@@ -37,7 +44,7 @@ export const calculateAtsScore = (text: string): { score: AtsScore; issues: Issu
 
   const sectionsFound: string[] = [];
   
-  // 1. Content Checks (20pts)
+  // 1. Content Checks (20pts) - South African Standards
   const hasEmail = PATTERNS.email.test(text);
   const hasPhone = PATTERNS.phone.test(text);
   
@@ -59,6 +66,40 @@ export const calculateAtsScore = (text: string): { score: AtsScore; issues: Issu
       severity: IssueSeverity.IMPORTANT,
       message: 'No phone number detected.',
       remediation: 'Include a contact number.',
+    });
+  }
+
+  // South African Specific Personal Details
+  const hasID = PATTERNS.saSpecific.idNumber.test(text);
+  if (!hasID) {
+    issues.push({
+      id: 'missing-id',
+      category: 'content',
+      severity: IssueSeverity.MINOR,
+      message: 'ID Number not detected.',
+      remediation: 'In South Africa, many employers still expect an ID number for background checks. Consider adding it or "Available on request".',
+    });
+  }
+
+  const hasLicense = PATTERNS.saSpecific.driversLicense.test(text);
+  if (!hasLicense) {
+    issues.push({
+      id: 'missing-license',
+      category: 'content',
+      severity: IssueSeverity.MINOR,
+      message: "Driver's License not mentioned.",
+      remediation: "Include your Driver's License code (e.g., Code B) if applicable, as it is a common requirement in SA.",
+    });
+  }
+
+  const hasNationality = PATTERNS.saSpecific.nationality.test(text);
+  if (!hasNationality) {
+    issues.push({
+      id: 'missing-nationality',
+      category: 'content',
+      severity: IssueSeverity.MINOR,
+      message: 'Nationality/Citizenship missing.',
+      remediation: 'South African recruiters often look for nationality or citizenship status upfront.',
     });
   }
   
@@ -88,6 +129,14 @@ export const calculateAtsScore = (text: string): { score: AtsScore; issues: Issu
             severity: IssueSeverity.CRITICAL,
             message: `Missing section: ${key.charAt(0).toUpperCase() + key.slice(1)}`,
             remediation: `Ensure you have a clearly labeled "${key.charAt(0).toUpperCase() + key.slice(1)}" section.`
+          });
+      } else if (key === 'languages' || key === 'references') {
+          issues.push({
+            id: `missing-section-${key}`,
+            category: 'ats',
+            severity: IssueSeverity.IMPORTANT,
+            message: `Missing section: ${key.charAt(0).toUpperCase() + key.slice(1)}`,
+            remediation: `South African CV standards strongly recommend including ${key}.`
           });
       }
     }

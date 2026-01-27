@@ -126,7 +126,7 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
         <div className="px-6 py-4 border-b border-gray-200 dark:border-zinc-800 flex justify-between items-center bg-gray-50/50 dark:bg-zinc-800/50">
           <div className="flex items-center gap-3">
             <Wand2 className="text-primary" />
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Optimization Studio</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Refinement Studio</h2>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => { onUpdateOriginal(improvedText); onClose(); }} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold">Apply Changes</button>
@@ -176,10 +176,10 @@ const ImprovementPanel: React.FC<ImprovementPanelProps> = ({ originalText, analy
                     </div>
 
                     <div>
-                        <label className="text-xs font-bold uppercase text-gray-400 mb-3 block">AI Suggestions</label>
+                        <label className="text-xs font-bold uppercase text-gray-400 mb-3 block">AI Keyword & Skill Matching</label>
                         <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} className="w-full h-24 p-3 text-sm rounded-xl border dark:bg-zinc-800 dark:border-zinc-700 dark:text-white" placeholder="Custom instruction..." />
                         <button onClick={() => handleImprove()} className="mt-2 w-full py-3 bg-primary text-white rounded-xl font-bold shadow-lg flex items-center justify-center gap-2">
-                            <Sparkles size={16} /> Optimize Content
+                            <Sparkles size={16} /> Optimise Content
                         </button>
                     </div>
 

@@ -1,23 +1,23 @@
 
 import React, { useState } from 'react';
-import { analyzeJobDescription } from '../services/geminiService';
+import { analyseJobDescription } from '../services/geminiService';
 import { JobAnalysisResult } from '../types';
 import { Search, Briefcase, Zap, Brain, ListChecks, Loader2, ArrowRight } from 'lucide-react';
 
-const JobAnalyzer: React.FC = () => {
+const JobAnalyser: React.FC = () => {
   const [jdText, setJdText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<JobAnalysisResult | null>(null);
 
-  const handleAnalyze = async () => {
+  const handleAnalyse = async () => {
     if (!jdText.trim()) return;
     setLoading(true);
     try {
-      const analysis = await analyzeJobDescription(jdText);
+      const analysis = await analyseJobDescription(jdText);
       setResult(analysis);
     } catch (error) {
       console.error(error);
-      alert("Failed to analyze job description. Please check your API key.");
+      alert("Failed to analyse job description. Please check your API key.");
     } finally {
       setLoading(false);
     }
@@ -43,13 +43,13 @@ const JobAnalyzer: React.FC = () => {
             className="w-full h-64 p-4 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none text-gray-800 dark:text-gray-200"
           />
           <button
-            onClick={handleAnalyze}
+            onClick={handleAnalyse}
             disabled={loading || !jdText.trim()}
             className={`mt-4 w-full py-3 rounded-xl text-white font-bold shadow-lg transition-all flex items-center justify-center gap-2 
               ${loading || !jdText.trim() ? 'bg-gray-400 cursor-not-allowed' : 'gradient-btn hover:scale-[1.01]'}`}
           >
             {loading ? <Loader2 className="animate-spin" /> : <Search size={20} />}
-            {loading ? "Analyzing..." : "Analyze Job Description"}
+            {loading ? "Analysing..." : "Analyse Job Description"}
           </button>
         </div>
       ) : (
@@ -60,7 +60,7 @@ const JobAnalyzer: React.FC = () => {
                 onClick={() => { setResult(null); setJdText(''); }}
                 className="text-sm text-primary hover:underline font-semibold"
               >
-                Analyze Another
+                Analyse Another
               </button>
            </div>
            
@@ -134,4 +134,4 @@ const JobAnalyzer: React.FC = () => {
   );
 };
 
-export default JobAnalyzer;
+export default JobAnalyser;

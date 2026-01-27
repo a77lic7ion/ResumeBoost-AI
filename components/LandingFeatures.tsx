@@ -11,8 +11,8 @@ const LandingFeatures: React.FC = () => {
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 mb-4">
                     <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">psychology</span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">AI-Powered Parsing</h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Parsing AI seamlessly converts your documents into structured data to evaluate your career potential.</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Smart Document Analysis</h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Our background systems seamlessly convert your documents into structured data to evaluate your career potential.</p>
             </div>
             <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-black/20 text-center">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-orange-100 dark:bg-orange-900/50 mb-4">
@@ -32,8 +32,8 @@ const LandingFeatures: React.FC = () => {
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/50 mb-4">
                     <span className="material-symbols-outlined text-amber-600 dark:text-amber-400">school</span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">AI-Showing</h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Optimize key data points and learn with common optimization strategies.</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Intelligent Optimisation</h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Refine key data points and align with industry-standard optimisation strategies.</p>
             </div>
         </div>
         </div>
@@ -69,7 +69,7 @@ const LandingFeatures: React.FC = () => {
                 </div>
                 <div>
                 <h3 className="text-lg font-semibold text-white">Metric Injection</h3>
-                <p className="text-gray-400 mt-1">Our AI detects vague claims and prompts you to add specific numbers, boosting credibility by 40%.</p>
+                <p className="text-gray-400 mt-1">Our intelligent analysis identifies vague claims and prompts you to add specific numbers, boosting credibility by 40%.</p>
                 </div>
                 </div>
                 </div>

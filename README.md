@@ -8,7 +8,8 @@
 **ResumeBoost AI** is an intelligent web application designed to help job seekers optimize their resumes for Applicant Tracking Systems (ATS). By leveraging the power of Google's Gemini 2.5 Flash model, it provides instant scoring, actionable feedback, and AI-powered rewriting to increase interview chances.
 
 
-l![Uploading image.png…]()
+<img width="1425" height="847" alt="image" src="https://github.com/user-attachments/assets/3fb5a61f-e0a5-460a-a0df-71fc81069e36" />
+
 
 ## ✨ Key Features
 

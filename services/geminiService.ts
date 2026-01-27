@@ -1,31 +1,41 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnalysisResult, JobAnalysisResult } from "../types";
+import { AnalysisResult, JobAnalysisResult, IntelligenceProvider } from "../types";
 import { getSettings } from "../utils/storage";
 
-const ANALYSIS_MODEL = "gemini-3-flash-preview";
-const IMPROVEMENT_MODEL = "gemini-3-pro-preview";
-const VISION_MODEL = "gemini-2.5-flash-image"; 
+// Using the provided Gemini 3 series for maximum intelligence
+const ANALYSIS_ENGINE = "gemini-3-flash-preview";
+const ENHANCEMENT_ENGINE = "gemini-3-pro-preview";
+const VISION_ENGINE = "gemini-2.5-flash-image"; 
 
-const handleGeminiError = (error: any): string => {
-  console.error("Gemini Service Error:", error);
-  return error.message || "An unexpected error occurred with the AI service.";
+const handleServiceError = (error: any): string => {
+  console.error("Intelligence Service Error:", error);
+  return error.message || "A background service error occurred.";
 };
 
 const getAI = (): GoogleGenAI => {
   return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
-export const validateApiKey = async (apiKey: string): Promise<{ isValid: boolean; error?: string }> => {
+/**
+ * Prefetches the model status (simulated as we use the injected API key)
+ */
+export const prefetchEngines = async () => {
+  console.debug("Prefetching Intelligent Engines...");
+  // In a multi-provider setup, we would verify connectivity here.
+};
+
+// Removed unused parameter to align with external API key management guidelines
+export const validateApiKey = async (): Promise<{ isValid: boolean; error?: string }> => {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     await ai.models.generateContent({
-      model: ANALYSIS_MODEL,
-      contents: "Test",
+      model: ANALYSIS_ENGINE,
+      contents: "Service ping",
     });
     return { isValid: true };
   } catch (error: any) {
-    return { isValid: false, error: handleGeminiError(error) };
+    return { isValid: false, error: handleServiceError(error) };
   }
 };
 
@@ -33,7 +43,7 @@ export const extractTextFromMultimodal = async (base64Data: string, mimeType: st
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: VISION_MODEL,
+      model: VISION_ENGINE,
       contents: {
         parts: [
           {
@@ -43,7 +53,7 @@ export const extractTextFromMultimodal = async (base64Data: string, mimeType: st
             }
           },
           {
-            text: "Extract all text from this document explicitly. Preserve the logical flow of sections (Experience, Education, etc.). Do not summarize, just transcribe."
+            text: "Examine this South African CV/document. Transcribe all text clearly, maintaining the structure of experience, education, and contact details. Do not summarise."
           }
         ]
       }
@@ -51,25 +61,25 @@ export const extractTextFromMultimodal = async (base64Data: string, mimeType: st
     
     return response.text || "";
   } catch (error: any) {
-    throw new Error(handleGeminiError(error));
+    throw new Error(handleServiceError(error));
   }
 };
 
-export const analyzeWithGemini = async (resumeText: string): Promise<NonNullable<AnalysisResult['aiAnalysis']>> => {
+export const analyseWithIntelligence = async (cvText: string): Promise<NonNullable<AnalysisResult['aiAnalysis']>> => {
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: ANALYSIS_MODEL,
-      contents: `Analyze the following resume text. 
-      1. Provide a 2-sentence summary.
-      2. List 3-5 strengths.
-      3. Identify missing industry keywords.
-      4. Evaluate the tone.
-      5. Categorize ALL skills found into 'Programming Languages', 'Tools & Frameworks', 'Soft Skills', or other relevant categories.
-      6. Suggest 5 additional high-demand skills the candidate likely has but didn't list based on their experience.
+      model: ANALYSIS_ENGINE,
+      contents: `Analyse this South African CV. 
+      1. Provide a 2-sentence professional summary in UK/SA English.
+      2. List 3-5 core strengths based on the content.
+      3. Identify missing industry keywords relevant to the South African market.
+      4. Evaluate the tone (Active vs Passive).
+      5. Categorise ALL skills into 'Technical Skills', 'Frameworks & Tools', 'Interpersonal Skills', or 'Other'.
+      6. Suggest 5 additional high-demand skills the candidate likely possesses but hasn't listed.
 
-      RESUME TEXT:
-      ${resumeText.slice(0, 10000)}`,
+      CV CONTENT:
+      ${cvText.slice(0, 12000)}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -90,19 +100,17 @@ export const analyzeWithGemini = async (resumeText: string): Promise<NonNullable
                 required: ["category", "skills"]
               }
             },
-            suggestedKeywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: "High-demand missing skills to add." }
+            suggestedKeywords: { type: Type.ARRAY, items: { type: Type.STRING } }
           },
           required: ["summary", "strengths", "missingKeywords", "toneCheck", "categorizedSkills", "suggestedKeywords"],
         }
       }
     });
 
-    const jsonText = response.text;
-    if (!jsonText) throw new Error("Empty response from AI");
-    return JSON.parse(jsonText);
+    return JSON.parse(response.text || "{}");
   } catch (error: any) {
     return {
-      summary: "Analysis incomplete due to service error.",
+      summary: "Analysis incomplete due to service interruption.",
       strengths: [],
       missingKeywords: [],
       toneCheck: "Unknown",
@@ -112,31 +120,30 @@ export const analyzeWithGemini = async (resumeText: string): Promise<NonNullable
   }
 };
 
-export const improveResumeContent = async (originalText: string, specificInstruction: string): Promise<string> => {
+export const enhanceCVContent = async (originalText: string, instruction: string): Promise<string> => {
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: IMPROVEMENT_MODEL,
-      contents: `You are an expert Resume Writer. Rewrite the content based on: ${specificInstruction}
+      model: ENHANCEMENT_ENGINE,
+      contents: `Refine this South African CV content based on: ${instruction}. 
+      Use UK/SA English spelling (e.g., 'optimise', 'programme'). Use strong action verbs and quantifiable metrics.
       
-      ORIGINAL CONTENT:
-      ${originalText}
-      
-      Requirements: Markdown format, strong action verbs, quantifiable results.`,
+      ORIGINAL TEXT:
+      ${originalText}`,
     });
 
-    return response.text || "Could not generate improvement.";
+    return response.text || "Enhancement failed.";
   } catch (error: any) {
-    return `Error: ${handleGeminiError(error)}`;
+    return `Service Error: ${handleServiceError(error)}`;
   }
 };
 
-export const analyzeJobDescription = async (jobDescription: string): Promise<JobAnalysisResult> => {
+export const analyseJobDescription = async (jd: string): Promise<JobAnalysisResult> => {
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: ANALYSIS_MODEL,
-      contents: `Analyze this Job Description: ${jobDescription}`,
+      model: ANALYSIS_ENGINE,
+      contents: `Analyse this South African Job Description: ${jd}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -155,19 +162,20 @@ export const analyzeJobDescription = async (jobDescription: string): Promise<Job
     });
     return JSON.parse(response.text || "{}");
   } catch (error: any) {
-    throw new Error(handleGeminiError(error));
+    throw new Error(handleServiceError(error));
   }
 };
 
-export const generateCoverLetter = async (resumeText: string, jobDescription?: string): Promise<string> => {
+export const generateProfessionalLetter = async (cv: string, jd?: string): Promise<string> => {
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: IMPROVEMENT_MODEL,
-      contents: `Write a cover letter for this resume: ${resumeText}. Job description (if any): ${jobDescription || "N/A"}`
+      model: ENHANCEMENT_ENGINE,
+      contents: `Write a professional cover letter for a South African job application. 
+      CV: ${cv}. Job Details: ${jd || "General application"}. Use UK English spelling.`
     });
-    return response.text || "Could not generate letter.";
+    return response.text || "Letter generation failed.";
   } catch (error: any) {
-    return `Error: ${handleGeminiError(error)}`;
+    return `Service Error: ${handleServiceError(error)}`;
   }
 };

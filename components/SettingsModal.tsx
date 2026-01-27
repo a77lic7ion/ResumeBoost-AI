@@ -1,169 +1,120 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Check, AlertCircle, Save, Key, Loader2, ShieldCheck, ExternalLink } from 'lucide-react';
+import { X, Check, AlertCircle, Save, Key, Loader2, ShieldCheck, ExternalLink, Cpu, Database } from 'lucide-react';
 import { getSettings, saveSettings } from '../utils/storage';
-import { validateApiKey } from '../services/geminiService';
+import { validateApiKey, prefetchEngines } from '../services/geminiService';
+import { IntelligenceProvider } from '../types';
 
 interface SettingsModalProps {
   onClose: () => void;
 }
 
+const PROVIDERS: { id: IntelligenceProvider, name: string, description: string }[] = [
+  { id: 'google', name: 'Google Gemini', description: 'Advanced multimodality & large context.' },
+  { id: 'anthropic', name: 'Anthropic Claude', description: 'Nuanced reasoning & professional tone.' },
+  { id: 'mistral', name: 'Mistral AI', description: 'Efficient open-source intelligence.' },
+  { id: 'xai', name: 'xAI Grok', description: 'Real-time updated knowledge base.' },
+  { id: 'ollama', name: 'Local Ollama', description: 'Privacy-focused local processing.' },
+];
+
 const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
-  const [apiKey, setApiKey] = useState('');
+  const [provider, setProvider] = useState<IntelligenceProvider>('google');
+  const [engine, setEngine] = useState('gemini-3-flash-preview');
   const [isTestLoading, setIsTestLoading] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const settings = getSettings();
-    if (settings.apiKey) {
-      setApiKey(settings.apiKey);
-    }
+    if (settings.preferredProvider) setProvider(settings.preferredProvider);
+    if (settings.preferredEngine) setEngine(settings.preferredEngine);
+    prefetchEngines();
   }, []);
 
-  const getEnvApiKey = () => {
-    let key = undefined;
-    try {
-      // @ts-ignore
-      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
-        // @ts-ignore
-        key = import.meta.env.VITE_API_KEY;
-      }
-    } catch(e) {}
-    
-    if (!key) {
-      try {
-        if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-          key = process.env.API_KEY;
-        }
-      } catch(e) {}
-    }
-    return key;
-  };
-
   const handleSave = () => {
-    saveSettings({ apiKey: apiKey.trim() });
+    saveSettings({ 
+      preferredProvider: provider,
+      preferredEngine: engine 
+    });
     onClose();
   };
 
   const handleTestConnection = async () => {
-    const keyToTest = apiKey.trim() || getEnvApiKey();
-    if (!keyToTest) {
-      setTestStatus('error');
-      setErrorMessage("No API Key provided to test.");
-      return;
-    }
-
     setIsTestLoading(true);
     setTestStatus('idle');
-    setErrorMessage('');
-
-    const result = await validateApiKey(keyToTest);
-
+    // API Key is managed externally and accessed via process.env.API_KEY inside the service
+    const result = await validateApiKey();
     setIsTestLoading(false);
-    if (result.isValid) {
-      setTestStatus('success');
-    } else {
-      setTestStatus('error');
-      setErrorMessage(result.error || "Connection failed. Check permissions.");
-    }
+    setTestStatus(result.isValid ? 'success' : 'error');
+    if (!result.isValid) setErrorMessage(result.error || "Service unavailable.");
   };
 
-  const envKey = getEnvApiKey();
-  const isUsingEnv = !apiKey && !!envKey;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in-up">
-      <div className="glass-effect border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in-up overflow-y-auto">
+      <div className="glass-effect border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-xl flex flex-col overflow-hidden my-auto">
         
-        {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Key size={18} /> API Settings
+            <Cpu size={18} /> Intelligence Configuration
           </h2>
           <button onClick={onClose} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500">
             <X size={20} />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
           
-          <div className="space-y-3">
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-              Google Gemini API Key
-            </label>
-            <div className="relative">
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => {
-                    setApiKey(e.target.value);
-                    setTestStatus('idle');
-                }}
-                placeholder={isUsingEnv ? "Using Environment Variable (Hidden)" : "Enter your API Key"}
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm text-slate-800 dark:text-slate-200"
-              />
-              <Key size={16} className="absolute left-3 top-2.5 text-slate-400" />
-            </div>
-            
-            <div className="flex flex-col gap-2">
-              <span className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                <span>
-                    {isUsingEnv 
-                    ? <span className="flex items-center gap-1 text-green-600 dark:text-green-400"><ShieldCheck size={12}/> Using secure environment variable</span> 
-                    : apiKey 
-                        ? "Using custom key provided above" 
-                        : "No key found"}
-                </span>
-              </span>
-              
-              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" 
-                 className="flex items-center justify-center gap-2 w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-primary dark:text-blue-400 font-medium rounded-lg text-xs transition-colors border border-slate-200 dark:border-slate-700">
-                  <span>Get a free Gemini API Key here</span>
-                  <ExternalLink size={12} />
-              </a>
-              
-              <span className="text-[10px] text-slate-400 mt-1">
-                Note for Vercel: Set variable name to <code>VITE_API_KEY</code>
-              </span>
+          <div className="space-y-4">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Intelligent Service Provider</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+               {PROVIDERS.map(p => (
+                 <div 
+                   key={p.id} 
+                   onClick={() => setProvider(p.id)}
+                   className={`p-3 rounded-xl border cursor-pointer transition-all ${provider === p.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 dark:border-slate-800 hover:border-slate-400'}`}
+                 >
+                   <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">{p.name}</span>
+                      {p.id !== 'google' && <span className="text-[8px] bg-slate-200 dark:bg-slate-800 px-1 rounded text-slate-500 uppercase tracking-tighter">Coming Soon</span>}
+                   </div>
+                   <p className="text-[10px] text-slate-500 leading-tight">{p.description}</p>
+                 </div>
+               ))}
             </div>
           </div>
 
-          {/* Status Message */}
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30 rounded-xl">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="text-blue-500 shrink-0" size={20} />
+              <div>
+                <p className="text-xs font-bold text-blue-900 dark:text-blue-200 uppercase mb-1">Managed Intelligence</p>
+                <p className="text-[11px] text-blue-700 dark:text-blue-300 leading-relaxed">
+                  The system uses a pre-configured secure channel for AI processing. No manual API key entry is required or supported to ensure privacy and compliance.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {testStatus === 'success' && (
             <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30 rounded-lg flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
-              <Check size={16} /> Connection Successful!
+              <Check size={16} /> Connection Validated
             </div>
           )}
-          
+
           {testStatus === 'error' && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg flex items-start gap-2 text-sm text-red-700 dark:text-red-300">
-              <AlertCircle size={16} className="shrink-0 mt-0.5" /> 
-              <span className="whitespace-pre-wrap">{errorMessage}</span>
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+              <AlertCircle size={16} /> {errorMessage}
             </div>
           )}
 
           <div className="flex gap-3 pt-2">
-            <button
-              onClick={handleTestConnection}
-              disabled={isTestLoading}
-              className="flex-1 py-2 px-4 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
-            >
-              {isTestLoading ? <Loader2 size={16} className="animate-spin" /> : "Test Key"}
+            <button onClick={handleTestConnection} disabled={isTestLoading} className="flex-1 py-2 px-4 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+              {isTestLoading ? <Loader2 size={16} className="animate-spin" /> : "Verify Status"}
             </button>
-            <button
-              onClick={handleSave}
-              className="flex-1 py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
-            >
-              <Save size={16} /> Save & Close
+            <button onClick={handleSave} className="flex-1 py-2 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white font-bold transition-all flex items-center justify-center gap-2">
+              <Save size={16} /> Save Preferences
             </button>
           </div>
-          
-          <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center leading-tight">
-            Your custom key is stored locally in your browser and is never sent to our servers.
-          </div>
-
         </div>
       </div>
     </div>

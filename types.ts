@@ -1,4 +1,3 @@
-
 export interface ResumeData {
   text: string;
   fileName?: string;
@@ -21,11 +20,11 @@ export interface Issue {
 export interface AtsScore {
   total: number;
   breakdown: {
-    format: number; // Max 25
-    content: number; // Max 25
-    atsCompatibility: number; // Max 25
-    keywords: number; // Max 15
-    impact: number; // Max 10
+    format: number; 
+    content: number; 
+    atsCompatibility: number;
+    keywords: number;
+    impact: number;
   };
   details: {
     wordCount: number;
@@ -64,6 +63,15 @@ export interface JobAnalysisResult {
   cultureFit: string;
 }
 
+export type IntelligenceProvider = 'google' | 'anthropic' | 'mistral' | 'xai' | 'ollama';
+
+export interface UserSettings {
+  apiKey?: string;
+  theme?: 'light' | 'dark' | 'system';
+  preferredProvider?: IntelligenceProvider;
+  preferredEngine?: string;
+}
+
 export interface SavedSession {
   id: string;
   name: string;
@@ -73,9 +81,4 @@ export interface SavedSession {
   profileImage?: string;
 }
 
-export interface UserSettings {
-  apiKey?: string;
-  theme?: 'light' | 'dark' | 'system';
-}
-
-export type ProcessingStatus = 'idle' | 'parsing' | 'scoring' | 'ai-analyzing' | 'complete' | 'error';
+export type ProcessingStatus = 'idle' | 'parsing' | 'scoring' | 'analysing' | 'complete' | 'error';

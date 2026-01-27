@@ -1,103 +1,131 @@
+
 import React from 'react';
 
 const LandingFeatures: React.FC = () => {
   return (
     <>
-    <section className="py-24 bg-background-light dark:bg-background-dark">
+    <section className="py-32 bg-[#05070A]">
         <div className="container mx-auto px-6">
-        <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">Why Choose ResumeBoost?</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-black/20 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 mb-4">
-                    <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">psychology</span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">AI-Powered Parsing</h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Parsing AI seamlessly converts your documents into structured data to evaluate your career potential.</p>
+            <div className="text-center mb-20 space-y-4">
+                <h2 className="text-5xl font-bold text-white tracking-tight">Purpose-Built for the SA Market</h2>
+                <p className="text-gray-500 max-w-2xl mx-auto text-lg leading-relaxed font-medium">
+                    Our intelligent engine is calibrated to mimic the most advanced ATS platforms, giving you a competitive edge in South Africa's professional landscape.
+                </p>
             </div>
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-black/20 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-orange-100 dark:bg-orange-900/50 mb-4">
-                    <span className="material-symbols-outlined text-orange-600 dark:text-orange-400">checklist</span>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-[#0A0D14] border border-zinc-900 p-8 rounded-3xl hover:border-primary/30 transition-all group">
+                    <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-8 border border-blue-500/20 group-hover:bg-primary group-hover:text-white transition-all">
+                        <span className="material-symbols-outlined text-primary group-hover:text-white">psychology</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-4">Neural CV Parsing</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed font-medium">Advanced models tailored to standard South African CV structures, extracting high-fidelity data points for local screening.</p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">ATS Simulation</h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Improve your ATS score to land more interviews by aligning with automated screening criteria.</p>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-black/20 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 mb-4">
-                    <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400">model_training</span>
+                <div className="bg-[#0A0D14] border border-zinc-900 p-8 rounded-3xl hover:border-orange-500/30 transition-all group">
+                    <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center mb-8 border border-orange-500/20 group-hover:bg-orange-500 group-hover:text-white transition-all">
+                        <span className="material-symbols-outlined text-orange-500 group-hover:text-white">checklist</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-4">ATS Synchronisation</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed font-medium">Simulate screening algorithms used by South Africa's top corporates and international firms to ensure you pass the first hurdle.</p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Process Scoring</h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">We use smart algorithms to enhance examination and training feedback loops.</p>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-lg dark:shadow-2xl dark:shadow-black/20 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/50 mb-4">
-                    <span className="material-symbols-outlined text-amber-600 dark:text-amber-400">school</span>
+                <div className="bg-[#0A0D14] border border-zinc-900 p-8 rounded-3xl hover:border-indigo-500/30 transition-all group">
+                    <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center mb-8 border border-indigo-500/20 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                        <span className="material-symbols-outlined text-indigo-500 group-hover:text-white">model_training</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-4">Benchmarked Scoring</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed font-medium">Algorithmic scoring provides granular feedback based on local industry benchmarks and professional expectations.</p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">AI-Showing</h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Optimize key data points and learn with common optimization strategies.</p>
+                <div className="bg-[#0A0D14] border border-zinc-900 p-8 rounded-3xl hover:border-green-500/30 transition-all group">
+                    <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center mb-8 border border-green-500/20 group-hover:bg-green-500 group-hover:text-white transition-all">
+                        <span className="material-symbols-outlined text-green-500 group-hover:text-white">school</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-4">Intelligent Support</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed font-medium">Receive expert suggestions to rephrase bullets and highlight achievements relevant to the South African professional landscape.</p>
+                </div>
             </div>
-        </div>
         </div>
     </section>
 
-    <section className="py-24 bg-background-dark">
+    <section className="py-32 bg-[#05070A]">
         <div className="container mx-auto px-6">
-            <div className="bg-[#12141D] rounded-3xl p-8 md:p-16 border border-zinc-800">
-                <div className="grid md:grid-cols-2 gap-12 items-center">
-                <div>
-                <div className="bg-[#292244] text-white text-xs font-semibold px-3 py-1 rounded-full inline-block mb-4">
-                            THE COMPETITIVE EDGE
+            <div className="bg-[#0A0D14] rounded-[48px] p-12 md:p-24 border border-zinc-900 relative overflow-hidden">
+                <div className="grid lg:grid-cols-2 gap-20 items-center relative z-10">
+                    <div className="space-y-10">
+                        <div className="inline-flex items-center px-4 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                            Recruitment Intelligence
+                        </div>
+                        <h2 className="text-6xl font-bold text-white tracking-tight leading-[1.1]">
+                            Optimise Your Path to the Shortlist
+                        </h2>
+                        <div className="space-y-12">
+                            <div className="flex items-start gap-6">
+                                <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+                                    <span className="material-symbols-outlined text-green-400">text_ad</span>
+                                </div>
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-bold text-white">Semantic Keyword Mapping</h3>
+                                    <p className="text-gray-500 text-sm leading-relaxed font-medium">We look beyond simple words to analyse professional context. Our engine identifies high-value missing skills that SA recruiters prioritise.</p>
+                                </div>
                             </div>
-                <h2 className="text-4xl font-bold text-white mb-8">
-                            Turn "Applied" into "Interviewed"
-                            </h2>
-                <div className="space-y-8">
-                <div>
-                <div className="flex items-start gap-4">
-                <div className="bg-green-900/50 p-2 rounded-lg border border-green-700/60">
-                <span className="material-symbols-outlined text-green-400">text_ad</span>
-                </div>
-                <div>
-                <h3 className="text-lg font-semibold text-white">Keyword Matching</h3>
-                <p className="text-gray-400 mt-1">We compare your resume against millions of job descriptions to find exactly what's missing.</p>
-                </div>
-                </div>
-                </div>
-                <div>
-                <div className="flex items-start gap-4">
-                <div className="bg-orange-900/50 p-2 rounded-lg border border-orange-700/60">
-                <span className="material-symbols-outlined text-orange-400">monitoring</span>
-                </div>
-                <div>
-                <h3 className="text-lg font-semibold text-white">Metric Injection</h3>
-                <p className="text-gray-400 mt-1">Our AI detects vague claims and prompts you to add specific numbers, boosting credibility by 40%.</p>
-                </div>
-                </div>
-                </div>
-                </div>
-                </div>
-                <div className="bg-[#1C2030] p-6 rounded-2xl border border-zinc-800 shadow-2xl shadow-black/30 transform rotate-2 hover:rotate-0 transition-transform duration-500">
-                <div className="flex justify-between items-center mb-6">
-                <div className="w-1/3 h-2 bg-zinc-700 rounded-full"></div>
-                <div className="flex items-center gap-2">
-                <span className="text-3xl font-bold text-green-400">92</span>
-                <span className="text-sm text-gray-400">/100</span>
-                </div>
-                </div>
-                <div className="space-y-4">
-                <div className="flex items-center">
-                <span className="material-symbols-outlined text-green-400 mr-3">check_circle</span>
-                <span className="text-gray-300">ATS Compliant Headers</span>
-                </div>
-                <div className="flex items-center">
-                <span className="material-symbols-outlined text-green-400 mr-3">check_circle</span>
-                <span className="text-gray-300">Strong Action Verbs</span>
-                </div>
-                <div className="flex items-center">
-                <span className="material-symbols-outlined text-green-400 mr-3">check_circle</span>
-                <span className="text-gray-300">Quantified Results</span>
-                </div>
-                </div>
-                </div>
+                            <div className="flex items-start gap-6">
+                                <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+                                    <span className="material-symbols-outlined text-orange-400">monitoring</span>
+                                </div>
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-bold text-white">Professional Impact Metric</h3>
+                                    <p className="text-gray-500 text-sm leading-relaxed font-medium">Convert vague job duties into powerful, quantifiable achievements. Our engine helps you prove your professional value to potential employers.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-primary to-blue-600 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+                        <div className="relative bg-[#12141D] p-10 rounded-3xl border border-zinc-800 shadow-2xl">
+                            <div className="flex justify-between items-center mb-10">
+                                <div className="space-y-2">
+                                    <div className="w-24 h-3 bg-zinc-800 rounded-full"></div>
+                                    <div className="w-16 h-3 bg-zinc-800/50 rounded-full"></div>
+                                </div>
+                                <div className="relative">
+                                    <svg className="w-20 h-20">
+                                        <circle className="text-zinc-800" strokeWidth="6" stroke="currentColor" fill="transparent" r="32" cx="40" cy="40" />
+                                        <circle className="text-green-500" strokeWidth="6" strokeDasharray="201.06" strokeDashoffset="16.08" strokeLinecap="round" stroke="currentColor" fill="transparent" r="32" cx="40" cy="40" />
+                                    </svg>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span className="text-xl font-bold text-white">92</span>
+                                        <span className="text-[8px] font-bold text-gray-500 uppercase">Score</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <div className="bg-zinc-950/50 p-4 rounded-xl border border-zinc-800 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-green-500 text-sm">check_circle</span>
+                                        <span className="text-xs font-bold text-gray-300">Format Integrity</span>
+                                    </div>
+                                    <span className="text-[8px] font-bold text-green-500 uppercase tracking-widest">Pass</span>
+                                </div>
+                                <div className="bg-zinc-950/50 p-4 rounded-xl border border-zinc-800 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-green-500 text-sm">check_circle</span>
+                                        <span className="text-xs font-bold text-gray-300">Keyword Density</span>
+                                    </div>
+                                    <span className="text-[8px] font-bold text-green-500 uppercase tracking-widest">High</span>
+                                </div>
+                                <div className="bg-zinc-950/50 p-4 rounded-xl border border-zinc-800 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-green-500 text-sm">check_circle</span>
+                                        <span className="text-xs font-bold text-gray-300">Bullet Strength</span>
+                                    </div>
+                                    <span className="text-[8px] font-bold text-green-500 uppercase tracking-widest">Exc.</span>
+                                </div>
+                            </div>
+                            <div className="mt-8 text-center">
+                                <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-[2px]">Optimised in 4.2 Seconds</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

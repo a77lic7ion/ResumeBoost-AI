@@ -7,19 +7,28 @@ const SETTINGS_KEY = 'resume_settings';
 export const saveSession = (session: SavedSession) => {
   try {
     const existing = getSessions();
-    // Update if exists, otherwise add
     const index = existing.findIndex(s => s.id === session.id);
     if (index >= 0) {
       existing[index] = session;
     } else {
-      existing.unshift(session); // Add to top
+      existing.unshift(session);
     }
-    // Limit to 10 saved sessions
     const trimmed = existing.slice(0, 10);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
   } catch (error) {
     console.error("Failed to save session", error);
   }
+};
+
+export const duplicateSession = (session: SavedSession, newName: string): SavedSession => {
+  const newSession: SavedSession = {
+    ...session,
+    id: generateId(),
+    name: newName,
+    timestamp: Date.now()
+  };
+  saveSession(newSession);
+  return newSession;
 };
 
 export const getSessions = (): SavedSession[] => {

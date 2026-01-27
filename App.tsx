@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import ResumeInput from './components/ResumeInput';
 import Dashboard from './components/Dashboard';
@@ -8,12 +9,11 @@ import PricingSection from './components/PricingSection';
 import JobAnalyzer from './components/JobAnalyzer';
 import CoverLetterGenerator from './components/CoverLetterGenerator';
 import { calculateAtsScore } from './utils/atsLogic';
-import { analyzeWithGemini } from './services/geminiService';
+import { analyseWithIntelligence } from './services/geminiService';
 import { AnalysisResult, SavedSession } from './types';
-import { Settings, Moon, Sun, Github, FileText, Briefcase, PenTool } from 'lucide-react';
-import { saveSession, generateId } from './utils/storage';
+import { Settings, Moon, Sun, FileText, Briefcase, PenTool, Zap } from 'lucide-react';
+import { saveSession, duplicateSession, generateId } from './utils/storage';
 
-// @ts-ignore
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'upload' | 'results'>('upload');
   const [activeTab, setActiveTab] = useState<'resume' | 'job' | 'cover'>('resume');
@@ -24,22 +24,7 @@ const App: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showImprovementPanel, setShowImprovementPanel] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setDarkMode(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
 
   const handleAnalyze = async (text: string, image?: string) => {
     setIsProcessing(true);
@@ -48,14 +33,9 @@ const App: React.FC = () => {
     setCurrentSessionId(generateId());
 
     const { score, issues } = calculateAtsScore(text);
-    const aiData = await analyzeWithGemini(text);
+    const aiData = await analyseWithIntelligence(text);
 
-    setAnalysisResult({
-      score,
-      issues,
-      aiAnalysis: aiData
-    });
-
+    setAnalysisResult({ score, issues, aiAnalysis: aiData });
     setIsProcessing(false);
     setCurrentStep('results');
     setActiveTab('resume');
@@ -72,111 +52,87 @@ const App: React.FC = () => {
 
   const handleSave = () => {
     if (!analysisResult || !resumeText || !currentSessionId) return;
-    let name = "Untitled Resume";
-    if (analysisResult.aiAnalysis?.summary) {
-        name = analysisResult.aiAnalysis.summary.split(' ').slice(0, 5).join(' ') + '...';
-    } else {
-        name = `Resume - ${new Date().toLocaleDateString()}`;
-    }
-
-    const session: SavedSession = {
+    saveSession({
         id: currentSessionId,
-        name: name,
+        name: `CV Refinement - ${new Date().toLocaleDateString()}`,
         timestamp: Date.now(),
         resumeText: resumeText,
         analysisResult: analysisResult,
         profileImage: profileImage
-    };
-
-    saveSession(session);
-    alert("Session saved successfully!");
+    });
+    alert("Progress updated successfully.");
   };
 
-  const handleUpdateOriginal = (newText: string) => {
-      setResumeText(newText);
-      const { score, issues } = calculateAtsScore(newText);
-      setAnalysisResult(prev => prev ? { ...prev, score, issues } : null);
+  const handleSaveAs = () => {
+    if (!analysisResult || !resumeText || !currentSessionId) return;
+    const currentName = `CV Refinement - ${new Date().toLocaleDateString()}`;
+    const newName = prompt("Enter a name for this new session version:", currentName);
+    if (newName) {
+      const newSession = duplicateSession({
+          id: currentSessionId,
+          name: newName,
+          timestamp: Date.now(),
+          resumeText: resumeText,
+          analysisResult: analysisResult,
+          profileImage: profileImage
+      }, newName);
+      setCurrentSessionId(newSession.id);
+      alert(`Saved as: ${newName}`);
+    }
   };
 
   return (
     <div className="gradient-bg min-h-screen flex flex-col selection:bg-primary selection:text-white">
-      
-      {/* Header */}
-      <header className="container mx-auto px-6 py-4">
+      <header className="container mx-auto px-4 md:px-6 py-4 md:py-6">
         <nav className="flex items-center justify-between">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentStep('upload')}>
-                <img 
-                  src="/logo.png" 
-                  alt="ResumeBoost AI" 
-                  className="w-10 h-10 object-contain drop-shadow-sm" 
-                  crossOrigin="anonymous"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                  }}
-                />
-                <span className="hidden bg-primary p-2 rounded-lg">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
-                </span>
-                <span className="font-bold text-xl text-gray-900 dark:text-white">ResumeBoost AI</span>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentStep('upload')}>
+                <div className="bg-primary p-1 md:p-1.5 rounded-lg text-white">
+                  <FileText size={18} />
+                </div>
+                <span className="font-bold text-lg md:text-xl text-white tracking-tight">ResumeBoost AI</span>
             </div>
             
-            <div className="flex items-center space-x-4">
-                 <button 
-                    onClick={() => setDarkMode(!darkMode)}
-                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
-                >
-                    {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            <div className="flex items-center space-x-3 md:space-x-8">
+                 <button className="hidden sm:block text-xs md:text-sm font-medium text-gray-400 hover:text-white transition-colors">Features</button>
+                 <button className="hidden sm:block text-xs md:text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</button>
+                 <button onClick={() => setShowSettings(true)} className="p-2 rounded-full hover:bg-white/5 text-gray-400">
+                    <Settings size={18} />
                 </button>
-                <button 
-                    onClick={() => setShowSettings(true)}
-                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
-                >
-                    <Settings size={20} />
-                </button>
+                <button className="bg-white text-black text-[10px] md:text-xs font-bold px-3 md:px-5 py-2 md:py-2.5 rounded-lg hover:bg-gray-200 transition-colors">Get Started</button>
             </div>
         </nav>
       </header>
 
-      {/* Main Content */}
       <main className="flex-grow">
          {currentStep === 'upload' ? (
              <div className="animate-fade-in-up">
-                 <div className="container mx-auto px-6 pt-12 pb-24">
-                    <div className="grid md:grid-cols-2 gap-12 items-center">
-                        <div className="order-2 md:order-1 text-center md:text-left">
-                            <h1 className="text-4xl md:text-6xl font-bold leading-tight text-gray-900 dark:text-white">
-                                Elevate Your Career with AI-Powered Resume Optimization
+                 <div className="container mx-auto px-4 md:px-6 pt-10 md:pt-16 pb-20 md:pb-24">
+                    <div className="grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
+                        <div className="text-center lg:text-left space-y-6 md:space-y-8">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider">
+                                <Zap size={10} fill="currentColor" /> Powered by Intelligent Services
+                            </div>
+                            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight text-white tracking-tight">
+                                Accelerate Your Career with <span className="text-primary">Professional CV Optimisation</span>
                             </h1>
-                            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-                                Unlock ATS insights, improve your score, and land more interviews instantly with Gemini 2.5 Flash.
+                            <p className="text-base md:text-lg text-gray-400 max-w-lg leading-relaxed mx-auto lg:mx-0">
+                                Unlock professional ATS insights, improve your score, and land more interviews across South Africa with our bespoke backend engine.
                             </p>
-                            <button 
-                              onClick={() => document.getElementById('resume-input-section')?.scrollIntoView({ behavior: 'smooth' })}
-                              className="mt-8 gradient-btn text-white font-bold py-4 px-10 rounded-xl shadow-lg hover:shadow-xl transition-all"
-                            >
-                                Get Started Now
-                            </button>
+                            <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-6 justify-center lg:justify-start">
+                                <button onClick={() => document.getElementById('cv-input-section')?.scrollIntoView({ behavior: 'smooth' })} className="w-full sm:w-auto gradient-btn text-white text-sm font-bold py-4 px-10 rounded-xl shadow-lg uppercase tracking-wider">
+                                    Analyse Now
+                                </button>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex -space-x-2">
+                                        {[1,2,3].map(i => <div key={i} className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-[#05070A] bg-zinc-800 flex items-center justify-center text-[7px] md:text-[8px] font-bold text-gray-500 uppercase tracking-tighter">Pro</div>)}
+                                    </div>
+                                    <span className="text-[10px] md:text-xs text-gray-500 font-medium">Trusted by 10K+ SA professionals</span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="order-1 md:order-2 flex justify-center">
-                             <img 
-                                alt="ResumeBoost AI Logo" 
-                                className="w-full max-w-md mx-auto drop-shadow-2xl object-contain hover:scale-105 transition-transform duration-500" 
-                                src="/logo.png"
-                                crossOrigin="anonymous"
-                                onError={(e) => {
-                                    e.currentTarget.style.opacity = '0.5';
-                                }}
-                             />
+                        <div id="cv-input-section" className="scroll-mt-24">
+                             <ResumeInput onAnalyze={handleAnalyze} onLoadSession={handleLoadSession} isProcessing={isProcessing} />
                         </div>
-                    </div>
-
-                    <div id="resume-input-section" className="mt-24 scroll-mt-24">
-                         <ResumeInput 
-                            onAnalyze={handleAnalyze} 
-                            onLoadSession={handleLoadSession}
-                            isProcessing={isProcessing} 
-                         />
                     </div>
                  </div>
 
@@ -184,46 +140,27 @@ const App: React.FC = () => {
                  <PricingSection />
              </div>
          ) : (
-             <div className="container mx-auto px-6 py-12 animate-fade-in-up">
-                  <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                     <button 
-                       onClick={() => setCurrentStep('upload')}
-                       className="text-gray-500 hover:text-primary dark:text-gray-400 font-medium flex items-center gap-2 transition-colors"
-                     >
-                       <span className="material-symbols-outlined font-medium">arrow_back</span> Analyze Another
+             <div className="container mx-auto px-4 md:px-6 py-8 md:py-12 animate-fade-in-up">
+                  <div className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                     <button onClick={() => setCurrentStep('upload')} className="text-gray-400 hover:text-white text-sm font-medium flex items-center gap-2 transition-colors">
+                       <span className="material-symbols-outlined text-sm">arrow_back</span> Return
                      </button>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 mb-8 bg-white dark:bg-zinc-900 p-2 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-800 w-fit">
-                      <button 
-                        onClick={() => setActiveTab('resume')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'resume' ? 'bg-primary text-white shadow-md' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'}`}
-                      >
-                         <FileText size={16} /> Resume Score
+                  <div className="flex overflow-x-auto gap-2 mb-8 bg-zinc-900/50 p-1.5 rounded-xl shadow-sm border border-zinc-800 w-full sm:w-fit scrollbar-hide">
+                      <button onClick={() => setActiveTab('resume')} className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap min-w-[120px] ${activeTab === 'resume' ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:bg-white/5'}`}>
+                         <FileText size={14} /> CV Scoring
                       </button>
-                      <button 
-                        onClick={() => setActiveTab('job')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'job' ? 'bg-primary text-white shadow-md' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'}`}
-                      >
-                         <Briefcase size={16} /> Job Decoder
+                      <button onClick={() => setActiveTab('job')} className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap min-w-[120px] ${activeTab === 'job' ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:bg-white/5'}`}>
+                         <Briefcase size={14} /> Role Matcher
                       </button>
-                      <button 
-                        onClick={() => setActiveTab('cover')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'cover' ? 'bg-primary text-white shadow-md' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'}`}
-                      >
-                         <PenTool size={16} /> Cover Letter
+                      <button onClick={() => setActiveTab('cover')} className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap min-w-[120px] ${activeTab === 'cover' ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:bg-white/5'}`}>
+                         <PenTool size={14} /> Professional Drafting
                       </button>
                   </div>
 
-                  {/* Tab Content */}
                   <div className="animate-fade-in">
-                      {activeTab === 'resume' && (
-                        <Dashboard 
-                            analysis={analysisResult!} 
-                            onImproveClick={() => setShowImprovementPanel(true)}
-                            onSave={handleSave}
-                        />
-                      )}
+                      {activeTab === 'resume' && <Dashboard analysis={analysisResult!} onImproveClick={() => setShowImprovementPanel(true)} onSave={handleSave} onSaveAs={handleSaveAs} />}
                       {activeTab === 'job' && <JobAnalyzer />}
                       {activeTab === 'cover' && <CoverLetterGenerator resumeText={resumeText} />}
                   </div>
@@ -231,34 +168,33 @@ const App: React.FC = () => {
          )}
       </main>
 
-      {/* Modals & Overlays */}
       {showImprovementPanel && (
           <ImprovementPanel 
-            originalText={resumeText}
-            analysisResult={analysisResult}
-            profileImage={profileImage}
-            onClose={() => setShowImprovementPanel(false)}
-            onUpdateOriginal={handleUpdateOriginal}
+            originalText={resumeText} analysisResult={analysisResult} profileImage={profileImage}
+            onClose={() => setShowImprovementPanel(false)} onUpdateOriginal={(t) => { setResumeText(t); const {score, issues} = calculateAtsScore(t); setAnalysisResult(p => p ? {...p, score, issues} : null); }}
           />
       )}
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       
-      {/* Footer */}
-      <footer className="bg-white dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-800 py-12">
+      <footer className="bg-[#05070A] border-t border-zinc-900 py-10 md:py-16 mt-auto">
           <div className="container mx-auto px-6">
               <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-                  <div className="flex items-center gap-3">
-                      <span className="font-bold text-xl text-gray-900 dark:text-white">ResumeBoost AI</span>
+                  <div className="space-y-3 text-center md:text-left">
+                    <div className="flex items-center gap-2 justify-center md:justify-start">
+                        <div className="bg-primary p-1 rounded-lg text-white">
+                          <FileText size={14} />
+                        </div>
+                        <span className="font-bold text-base md:text-lg text-white tracking-tight">ResumeBoost AI</span>
+                    </div>
+                    <p className="text-gray-500 text-[10px] md:text-xs">Leading career acceleration platform for SA professionals.</p>
                   </div>
-                  <div className="flex items-center gap-6">
-                      <a href="https://github.com" className="text-gray-500 hover:text-primary transition-colors">
-                          <Github size={20} />
-                      </a>
+                  <div className="flex items-center gap-6 md:gap-8">
+                      <button className="text-[10px] font-bold text-gray-500 hover:text-white uppercase tracking-wider">Privacy</button>
+                      <button className="text-[10px] font-bold text-gray-500 hover:text-white uppercase tracking-wider">Terms</button>
+                      <button className="text-[10px] font-bold text-gray-500 hover:text-white uppercase tracking-wider">Contact</button>
                   </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">
-                      © {new Date().getFullYear()} ResumeBoost AI. All rights reserved.
-                  </p>
+                  <p className="text-gray-600 text-[9px] md:text-[10px] font-medium">© 2026 ResumeBoost AI. Designed by Afflicted.ai</p>
               </div>
           </div>
       </footer>

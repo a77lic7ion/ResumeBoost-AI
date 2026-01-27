@@ -7,12 +7,12 @@ import { SavedSession } from '../types';
 import { Loader2, Trash2, AlertCircle, Camera, Image as ImageIcon, X, Link as LinkIcon, CheckCircle2, HelpCircle } from 'lucide-react';
 
 interface ResumeInputProps {
-  onAnalyze: (text: string, image?: string) => void;
+  onAnalyse: (text: string, image?: string) => void;
   onLoadSession: (session: SavedSession) => void;
   isProcessing: boolean;
 }
 
-const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isProcessing }) => {
+const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyse, onLoadSession, isProcessing }) => {
   const [activeTab, setActiveTab] = useState<'upload' | 'paste'>('upload');
   const [text, setText] = useState('');
   const [dragActive, setDragActive] = useState(false);
@@ -168,13 +168,13 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
     }
   };
 
-  const handleAnalyzeClick = () => {
+  const handleAnalyseClick = () => {
       let finalText = text;
       // Append LinkedIn if valid and present
       if (linkedinUrl && isLinkedinValid && !text.toLowerCase().includes('linkedin.com')) {
           finalText = `LinkedIn: ${linkedinUrl}\n\n${text}`;
       }
-      onAnalyze(finalText, activeProfileImage);
+      onAnalyse(finalText, activeProfileImage);
   };
 
   const isLoading = isProcessing || extracting;
@@ -183,7 +183,7 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
 
   return (
     <div className="max-w-4xl mx-auto bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-xl dark:shadow-2xl dark:shadow-black/20">
-        <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">Optimize Your Resume Now</h2>
+        <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">Optimise Your Resume Now</h2>
         
         {/* Error Banner */}
         {error && (
@@ -356,7 +356,7 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
         {/* Action Button */}
         <div className="mt-6 flex justify-center">
             <button 
-                onClick={handleAnalyzeClick}
+                onClick={handleAnalyseClick}
                 disabled={text.length < 50 || isLoading || (!isLinkedinValid && linkedinUrl.length > 0)}
                 className={`gradient-btn text-white font-semibold py-3 px-12 rounded-lg w-full max-w-xs transition-opacity
                  ${text.length < 50 || isLoading || (!isLinkedinValid && linkedinUrl.length > 0) ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg transform hover:-translate-y-0.5'}`}
@@ -365,7 +365,7 @@ const ResumeInput: React.FC<ResumeInputProps> = ({ onAnalyze, onLoadSession, isP
                     <span className="flex items-center justify-center gap-2">
                         <Loader2 className="animate-spin" size={20} /> Processing...
                     </span>
-                ) : 'Analyze Resume'}
+                ) : 'Analyse Resume'}
             </button>
         </div>
 

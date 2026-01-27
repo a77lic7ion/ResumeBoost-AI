@@ -55,18 +55,18 @@ export const extractTextFromMultimodal = async (base64Data: string, mimeType: st
   }
 };
 
-export const analyzeWithGemini = async (resumeText: string): Promise<NonNullable<AnalysisResult['aiAnalysis']>> => {
+export const analyseWithGemini = async (resumeText: string): Promise<NonNullable<AnalysisResult['aiAnalysis']>> => {
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: ANALYSIS_MODEL,
-      contents: `Analyze the following resume text. 
+      contents: `Analyse the following resume text based on South African professional standards.
       1. Provide a 2-sentence summary.
       2. List 3-5 strengths.
-      3. Identify missing industry keywords.
-      4. Evaluate the tone.
+      3. Identify missing industry keywords specifically relevant to the South African market.
+      4. Evaluate the tone (ensure it meets professional South African expectations).
       5. Categorize ALL skills found into 'Programming Languages', 'Tools & Frameworks', 'Soft Skills', or other relevant categories.
-      6. Suggest 5 additional high-demand skills the candidate likely has but didn't list based on their experience.
+      6. Suggest 5 additional high-demand skills (locally relevant in SA) the candidate likely has but didn't list based on their experience.
 
       RESUME TEXT:
       ${resumeText.slice(0, 10000)}`,
@@ -117,12 +117,15 @@ export const improveResumeContent = async (originalText: string, specificInstruc
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: IMPROVEMENT_MODEL,
-      contents: `You are an expert Resume Writer. Rewrite the content based on: ${specificInstruction}
+      contents: `You are an expert South African Resume Writer. Rewrite the content based on: ${specificInstruction}.
+
+      Ensure the output adheres to South African professional standards and is highly compatible for LinkedIn export.
+      Focus on professional clarity, 11-official-language-awareness if relevant, and reverse-chronological order.
       
       ORIGINAL CONTENT:
       ${originalText}
       
-      Requirements: Markdown format, strong action verbs, quantifiable results.`,
+      Requirements: Markdown format, strong action verbs, quantifiable results, South African market relevance.`,
     });
 
     return response.text || "Could not generate improvement.";
@@ -131,12 +134,12 @@ export const improveResumeContent = async (originalText: string, specificInstruc
   }
 };
 
-export const analyzeJobDescription = async (jobDescription: string): Promise<JobAnalysisResult> => {
+export const analyseJobDescription = async (jobDescription: string): Promise<JobAnalysisResult> => {
   try {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: ANALYSIS_MODEL,
-      contents: `Analyze this Job Description: ${jobDescription}`,
+      contents: `Analyse this Job Description: ${jobDescription}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -164,7 +167,9 @@ export const generateCoverLetter = async (resumeText: string, jobDescription?: s
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: IMPROVEMENT_MODEL,
-      contents: `Write a cover letter for this resume: ${resumeText}. Job description (if any): ${jobDescription || "N/A"}`
+      contents: `Write a professional South African style cover letter for this resume: ${resumeText}.
+      Job description (if any): ${jobDescription || "N/A"}.
+      The tone should be professional and respectful, as per South African corporate standards.`
     });
     return response.text || "Could not generate letter.";
   } catch (error: any) {

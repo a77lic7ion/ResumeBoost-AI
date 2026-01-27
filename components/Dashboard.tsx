@@ -65,7 +65,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
           </div>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-8 leading-relaxed">
             {score.total >= 80 ? "Excellent! Your resume is ready for applications." : 
-             score.total >= 60 ? "Good start, but needs optimization." : 
+             score.total >= 60 ? "Good start, but needs optimisation." :
              "Significant improvements needed to pass ATS."}
           </p>
           <button 
@@ -73,7 +73,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
             className="w-full group flex items-center justify-center gap-2 gradient-btn text-white py-3.5 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl font-bold"
           >
             <Wand2 size={20} className="group-hover:rotate-12 transition-transform" />
-            AI Optimize Resume
+            Optimise Resume
           </button>
         </div>
 
@@ -112,7 +112,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
               <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg text-purple-600 dark:text-purple-400">
                   <Cpu size={24} />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Skills Matrix & Optimization</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">AI-Powered Skill Matrix</h3>
            </div>
            
            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -136,7 +136,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
                 <div className="md:col-span-2 lg:col-span-3 mt-4 p-5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl">
                     <div className="flex items-center gap-2 mb-3">
                         <Target className="text-indigo-600 dark:text-indigo-400" size={18} />
-                        <h4 className="text-sm font-bold text-indigo-900 dark:text-indigo-100 uppercase tracking-wide">High-Demand Skill Suggestions</h4>
+                        <h4 className="text-sm font-bold text-indigo-900 dark:text-indigo-100 uppercase tracking-wide">AI Keyword Matching</h4>
                     </div>
                     <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-4">Based on your experience, employers often look for these missing keywords in your industry:</p>
                     <div className="flex flex-wrap gap-2">
@@ -152,14 +152,14 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
         </div>
       )}
 
-      {/* AI Analysis Summary */}
+      {/* Intelligent Analysis Summary */}
       {aiAnalysis && (
         <div className="bg-white dark:bg-zinc-900 border border-indigo-100 dark:border-zinc-800 rounded-2xl p-8 shadow-lg">
           <h3 className="flex items-center gap-3 text-xl font-bold text-gray-900 dark:text-white mb-6">
              <div className="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-lg text-indigo-600 dark:text-indigo-400">
                 <Wand2 size={24} />
              </div>
-             Gemini AI Insight
+             Intelligent Career Insight
           </h3>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-6">
@@ -192,7 +192,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
       {/* Issues List */}
       <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-lg">
         <div className="p-6 border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/40">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">ATS Optimization Checklist</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">ATS Optimisation Checklist</h3>
         </div>
         <div className="divide-y divide-gray-200 dark:divide-zinc-800">
           {issues.length === 0 ? (

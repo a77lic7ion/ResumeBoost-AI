@@ -5,10 +5,10 @@ import ImprovementPanel from './components/ImprovementPanel';
 import SettingsModal from './components/SettingsModal';
 import LandingFeatures from './components/LandingFeatures';
 import PricingSection from './components/PricingSection';
-import JobAnalyzer from './components/JobAnalyzer';
+import JobAnalyser from './components/JobAnalyser';
 import CoverLetterGenerator from './components/CoverLetterGenerator';
 import { calculateAtsScore } from './utils/atsLogic';
-import { analyzeWithGemini } from './services/geminiService';
+import { analyseWithGemini } from './services/geminiService';
 import { AnalysisResult, SavedSession } from './types';
 import { Settings, Moon, Sun, Github, FileText, Briefcase, PenTool } from 'lucide-react';
 import { saveSession, generateId } from './utils/storage';
@@ -41,14 +41,14 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
-  const handleAnalyze = async (text: string, image?: string) => {
+  const handleAnalyse = async (text: string, image?: string) => {
     setIsProcessing(true);
     setResumeText(text);
     setProfileImage(image);
     setCurrentSessionId(generateId());
 
     const { score, issues } = calculateAtsScore(text);
-    const aiData = await analyzeWithGemini(text);
+    const aiData = await analyseWithGemini(text);
 
     setAnalysisResult({
       score,
@@ -146,10 +146,10 @@ const App: React.FC = () => {
                     <div className="grid md:grid-cols-2 gap-12 items-center">
                         <div className="order-2 md:order-1 text-center md:text-left">
                             <h1 className="text-4xl md:text-6xl font-bold leading-tight text-gray-900 dark:text-white">
-                                Elevate Your Career with AI-Powered Resume Optimization
+                                Elevate Your Career with Intelligent Resume Optimisation
                             </h1>
                             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-                                Unlock ATS insights, improve your score, and land more interviews instantly with Gemini 2.5 Flash.
+                                Unlock professional ATS insights, improve your score, and land more interviews with our advanced background analysis.
                             </p>
                             <button 
                               onClick={() => document.getElementById('resume-input-section')?.scrollIntoView({ behavior: 'smooth' })}
@@ -173,7 +173,7 @@ const App: React.FC = () => {
 
                     <div id="resume-input-section" className="mt-24 scroll-mt-24">
                          <ResumeInput 
-                            onAnalyze={handleAnalyze} 
+                            onAnalyse={handleAnalyse}
                             onLoadSession={handleLoadSession}
                             isProcessing={isProcessing} 
                          />
@@ -190,7 +190,7 @@ const App: React.FC = () => {
                        onClick={() => setCurrentStep('upload')}
                        className="text-gray-500 hover:text-primary dark:text-gray-400 font-medium flex items-center gap-2 transition-colors"
                      >
-                       <span className="material-symbols-outlined font-medium">arrow_back</span> Analyze Another
+                       <span className="material-symbols-outlined font-medium">arrow_back</span> Analyse Another
                      </button>
                   </div>
 
@@ -224,7 +224,7 @@ const App: React.FC = () => {
                             onSave={handleSave}
                         />
                       )}
-                      {activeTab === 'job' && <JobAnalyzer />}
+                      {activeTab === 'job' && <JobAnalyser />}
                       {activeTab === 'cover' && <CoverLetterGenerator resumeText={resumeText} />}
                   </div>
              </div>

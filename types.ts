@@ -37,6 +37,11 @@ export interface AtsScore {
   };
 }
 
+export interface SkillCategory {
+  category: string;
+  skills: string[];
+}
+
 export interface AnalysisResult {
   score: AtsScore;
   issues: Issue[];
@@ -45,6 +50,8 @@ export interface AnalysisResult {
     strengths: string[];
     missingKeywords: string[];
     toneCheck: string;
+    categorizedSkills?: SkillCategory[];
+    suggestedKeywords?: string[];
   };
 }
 

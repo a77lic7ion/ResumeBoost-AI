@@ -13,6 +13,7 @@ import { AnalysisResult, SavedSession } from './types';
 import { Settings, Moon, Sun, Github, FileText, Briefcase, PenTool } from 'lucide-react';
 import { saveSession, generateId } from './utils/storage';
 
+// @ts-ignore
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'upload' | 'results'>('upload');
   const [activeTab, setActiveTab] = useState<'resume' | 'job' | 'cover'>('resume');
@@ -104,19 +105,16 @@ const App: React.FC = () => {
       <header className="container mx-auto px-6 py-4">
         <nav className="flex items-center justify-between">
             <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentStep('upload')}>
-                {/* Navbar Logo */}
                 <img 
                   src="/logo.png" 
                   alt="ResumeBoost AI" 
                   className="w-10 h-10 object-contain drop-shadow-sm" 
                   crossOrigin="anonymous"
                   onError={(e) => {
-                    // Fallback if image not found
                     e.currentTarget.style.display = 'none';
                     e.currentTarget.nextElementSibling?.classList.remove('hidden');
                   }}
                 />
-                {/* Fallback Icon */}
                 <span className="hidden bg-primary p-2 rounded-lg">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
                 </span>
@@ -144,7 +142,6 @@ const App: React.FC = () => {
       <main className="flex-grow">
          {currentStep === 'upload' ? (
              <div className="animate-fade-in-up">
-                 {/* Hero Section */}
                  <div className="container mx-auto px-6 pt-12 pb-24">
                     <div className="grid md:grid-cols-2 gap-12 items-center">
                         <div className="order-2 md:order-1 text-center md:text-left">
@@ -154,23 +151,27 @@ const App: React.FC = () => {
                             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
                                 Unlock ATS insights, improve your score, and land more interviews instantly with Gemini 2.5 Flash.
                             </p>
+                            <button 
+                              onClick={() => document.getElementById('resume-input-section')?.scrollIntoView({ behavior: 'smooth' })}
+                              className="mt-8 gradient-btn text-white font-bold py-4 px-10 rounded-xl shadow-lg hover:shadow-xl transition-all"
+                            >
+                                Get Started Now
+                            </button>
                         </div>
                         <div className="order-1 md:order-2 flex justify-center">
-                             {/* Hero Image */}
                              <img 
                                 alt="ResumeBoost AI Logo" 
                                 className="w-full max-w-md mx-auto drop-shadow-2xl object-contain hover:scale-105 transition-transform duration-500" 
                                 src="/logo.png"
                                 crossOrigin="anonymous"
                                 onError={(e) => {
-                                    // Hide if failed
                                     e.currentTarget.style.opacity = '0.5';
                                 }}
                              />
                         </div>
                     </div>
 
-                    <div className="mt-16">
+                    <div id="resume-input-section" className="mt-24 scroll-mt-24">
                          <ResumeInput 
                             onAnalyze={handleAnalyze} 
                             onLoadSession={handleLoadSession}
@@ -189,11 +190,10 @@ const App: React.FC = () => {
                        onClick={() => setCurrentStep('upload')}
                        className="text-gray-500 hover:text-primary dark:text-gray-400 font-medium flex items-center gap-2 transition-colors"
                      >
-                       <span className="material-symbols-outlined">arrow_back</span> Analyze Another
+                       <span className="material-symbols-outlined font-medium">arrow_back</span> Analyze Another
                      </button>
                   </div>
 
-                  {/* Feature Navigation Tabs */}
                   <div className="flex flex-wrap gap-2 mb-8 bg-white dark:bg-zinc-900 p-2 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-800 w-fit">
                       <button 
                         onClick={() => setActiveTab('resume')}
@@ -205,7 +205,7 @@ const App: React.FC = () => {
                         onClick={() => setActiveTab('job')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'job' ? 'bg-primary text-white shadow-md' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'}`}
                       >
-                         <Briefcase size={16} /> Job Analyzer
+                         <Briefcase size={16} /> Job Decoder
                       </button>
                       <button 
                         onClick={() => setActiveTab('cover')}
@@ -214,15 +214,15 @@ const App: React.FC = () => {
                          <PenTool size={16} /> Cover Letter
                       </button>
                   </div>
-                  
-                  {/* Dynamic Content */}
-                  <div className="min-h-[600px]">
-                      {activeTab === 'resume' && analysisResult && (
-                          <Dashboard 
-                              analysis={analysisResult} 
-                              onImproveClick={() => setShowImprovementPanel(true)} 
-                              onSave={handleSave}
-                          />
+
+                  {/* Tab Content */}
+                  <div className="animate-fade-in">
+                      {activeTab === 'resume' && (
+                        <Dashboard 
+                            analysis={analysisResult!} 
+                            onImproveClick={() => setShowImprovementPanel(true)}
+                            onSave={handleSave}
+                        />
                       )}
                       {activeTab === 'job' && <JobAnalyzer />}
                       {activeTab === 'cover' && <CoverLetterGenerator resumeText={resumeText} />}
@@ -231,35 +231,37 @@ const App: React.FC = () => {
          )}
       </main>
 
-      {/* Footer */}
-      <footer className="py-8 px-6 border-t border-gray-200 dark:border-zinc-800 bg-background-light dark:bg-background-dark">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-             <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
-                <span className="font-bold text-gray-900 dark:text-white">ResumeBoost AI</span>
-             </div>
-             <p className="text-sm text-gray-500 dark:text-gray-400">
-                Created by AfflictedAI
-             </p>
-             <div className="flex gap-4">
-                <a href="#" className="text-gray-500 hover:text-primary transition-colors"><Github size={20} /></a>
-             </div>
-        </div>
-      </footer>
-
+      {/* Modals & Overlays */}
       {showImprovementPanel && (
           <ImprovementPanel 
-            originalText={resumeText} 
+            originalText={resumeText}
             analysisResult={analysisResult}
             profileImage={profileImage}
             onClose={() => setShowImprovementPanel(false)}
             onUpdateOriginal={handleUpdateOriginal}
           />
-        )}
-
-      {showSettings && (
-          <SettingsModal onClose={() => setShowSettings(false)} />
       )}
+
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      
+      {/* Footer */}
+      <footer className="bg-white dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-800 py-12">
+          <div className="container mx-auto px-6">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+                  <div className="flex items-center gap-3">
+                      <span className="font-bold text-xl text-gray-900 dark:text-white">ResumeBoost AI</span>
+                  </div>
+                  <div className="flex items-center gap-6">
+                      <a href="https://github.com" className="text-gray-500 hover:text-primary transition-colors">
+                          <Github size={20} />
+                      </a>
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                      © {new Date().getFullYear()} ResumeBoost AI. All rights reserved.
+                  </p>
+              </div>
+          </div>
+      </footer>
     </div>
   );
 };

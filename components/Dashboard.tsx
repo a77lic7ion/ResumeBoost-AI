@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { AnalysisResult, Issue, IssueSeverity } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { CheckCircle, AlertTriangle, XCircle, Wand2, Save } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Wand2, Save, Cpu, BrainCircuit, Target } from 'lucide-react';
 
 interface DashboardProps {
   analysis: AnalysisResult;
@@ -55,7 +56,6 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
 
       {/* Top Section: Score & Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         {/* Score Card */}
         <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg dark:shadow-black/20">
           <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">Overall ATS Score</h3>
@@ -92,19 +92,10 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
                     axisLine={false}
                     tickLine={false}
                 />
-                <Tooltip 
-                    cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                    contentStyle={{ 
-                        borderRadius: '12px', 
-                        border: 'none', 
-                        backgroundColor: '#18181b',
-                        color: '#f8fafc',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' 
-                    }}
-                />
+                <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} />
                 <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={24}>
                     {data.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill="#2563EB" className="opacity-90 hover:opacity-100 transition-opacity" />
+                        <Cell key={`cell-${index}`} fill="#2563EB" />
                     ))}
                     <LabelList dataKey="score" position="right" fill="#94a3b8" fontSize={12} fontWeight="bold" />
                 </Bar>
@@ -114,6 +105,53 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
         </div>
       </div>
 
+      {/* Skills Analysis Section */}
+      {aiAnalysis?.categorizedSkills && aiAnalysis.categorizedSkills.length > 0 && (
+        <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-8 shadow-lg">
+           <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg text-purple-600 dark:text-purple-400">
+                  <Cpu size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Skills Matrix & Optimization</h3>
+           </div>
+           
+           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {aiAnalysis.categorizedSkills.map((cat, i) => (
+                <div key={i} className="space-y-3 p-4 rounded-xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800">
+                    <h4 className="text-sm font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-2">
+                       <BrainCircuit size={16} /> {cat.category}
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                        {cat.skills.map((s, si) => (
+                            <span key={si} className="text-xs px-2 py-1 bg-white dark:bg-zinc-700 text-gray-700 dark:text-gray-200 rounded border border-gray-200 dark:border-zinc-600">
+                                {s}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+              ))}
+
+              {/* High-Demand Suggestions */}
+              {aiAnalysis.suggestedKeywords && aiAnalysis.suggestedKeywords.length > 0 && (
+                <div className="md:col-span-2 lg:col-span-3 mt-4 p-5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Target className="text-indigo-600 dark:text-indigo-400" size={18} />
+                        <h4 className="text-sm font-bold text-indigo-900 dark:text-indigo-100 uppercase tracking-wide">High-Demand Skill Suggestions</h4>
+                    </div>
+                    <p className="text-xs text-indigo-700 dark:text-indigo-300 mb-4">Based on your experience, employers often look for these missing keywords in your industry:</p>
+                    <div className="flex flex-wrap gap-2">
+                        {aiAnalysis.suggestedKeywords.map((k, i) => (
+                            <span key={i} className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-1.5 cursor-pointer hover:bg-indigo-700 transition-colors">
+                                <Target size={12} /> {k}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+              )}
+           </div>
+        </div>
+      )}
+
       {/* AI Analysis Summary */}
       {aiAnalysis && (
         <div className="bg-white dark:bg-zinc-900 border border-indigo-100 dark:border-zinc-800 rounded-2xl p-8 shadow-lg">
@@ -121,7 +159,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
              <div className="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-lg text-indigo-600 dark:text-indigo-400">
                 <Wand2 size={24} />
              </div>
-             Gemini AI Analysis
+             Gemini AI Insight
           </h3>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-6">
@@ -129,13 +167,11 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
                 <h4 className="text-sm font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2">Executive Summary</h4>
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{aiAnalysis.summary}</p>
               </div>
-              
               <div>
                 <h4 className="text-sm font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2">Tone Check</h4>
                 <p className="text-gray-700 dark:text-gray-300">{aiAnalysis.toneCheck}</p>
               </div>
             </div>
-            
             <div className="space-y-6">
               <div>
                 <h4 className="text-sm font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2">Key Strengths</h4>
@@ -148,17 +184,6 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
                   ))}
                 </ul>
               </div>
-              
-              <div>
-                <h4 className="text-sm font-bold uppercase tracking-wider text-red-500 dark:text-red-400 mb-2">Missing Keywords</h4>
-                <div className="flex flex-wrap gap-2">
-                  {aiAnalysis.missingKeywords.map((k, i) => (
-                    <span key={i} className="px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-full text-sm font-medium border border-red-100 dark:border-red-900/30">
-                      {k}
-                    </span>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -167,35 +192,30 @@ const Dashboard: React.FC<DashboardProps> = ({ analysis, onImproveClick, onSave 
       {/* Issues List */}
       <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-lg">
         <div className="p-6 border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/40">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Optimization Checklist</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">ATS Optimization Checklist</h3>
         </div>
         <div className="divide-y divide-gray-200 dark:divide-zinc-800">
           {issues.length === 0 ? (
              <div className="p-12 text-center">
-                <div className="inline-flex items-center justify-center p-4 bg-green-100 dark:bg-green-900/30 rounded-full text-green-600 dark:text-green-400 mb-4">
-                    <CheckCircle size={32} />
-                </div>
+                <CheckCircle size={32} className="mx-auto text-green-500 mb-4" />
                 <h4 className="text-lg font-medium text-gray-900 dark:text-white">All Clear!</h4>
-                <p className="text-gray-500 dark:text-gray-400">Your resume passed all basic ATS checks.</p>
              </div>
           ) : (
               issues.map((issue) => (
-                <div key={issue.id} className="p-6 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors group">
+                <div key={issue.id} className="p-6 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <div className="flex items-start gap-4">
-                    <div className="mt-1 flex-shrink-0">
-                      {getSeverityIcon(issue.severity)}
-                    </div>
+                    <div className="mt-1 flex-shrink-0">{getSeverityIcon(issue.severity)}</div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="text-base font-semibold text-gray-900 dark:text-white">{issue.message}</h4>
                         <span className={`text-xs font-bold px-2.5 py-1 rounded uppercase tracking-wider
-                          ${issue.severity === IssueSeverity.CRITICAL ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 
-                            issue.severity === IssueSeverity.IMPORTANT ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                          ${issue.severity === IssueSeverity.CRITICAL ? 'bg-red-100 text-red-700' : 
+                            issue.severity === IssueSeverity.IMPORTANT ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
                           }`}>
                           {issue.severity}
                         </span>
                       </div>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">{issue.remediation}</p>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm">{issue.remediation}</p>
                     </div>
                   </div>
                 </div>

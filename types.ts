@@ -66,7 +66,6 @@ export interface JobAnalysisResult {
 export type IntelligenceProvider = 'google' | 'anthropic' | 'mistral' | 'xai' | 'ollama';
 
 export interface UserSettings {
-  apiKey?: string;
   theme?: 'light' | 'dark' | 'system';
   preferredProvider?: IntelligenceProvider;
   analysisModel?: string;

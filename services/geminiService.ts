@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, GenerateContentParameters } from "@google/genai";
 import { AnalysisResult, JobAnalysisResult, UserSettings } from "../types";
 import { getSettings } from "../utils/storage";
 
@@ -17,9 +17,26 @@ const getAI = (): GoogleGenAI => {
   return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
+const getConfig = (settings: UserSettings): GenerateContentParameters['config'] => {
+  const config: GenerateContentParameters['config'] = {
+    temperature: settings.temperature ?? 1,
+    topP: settings.topP ?? 0.95,
+    topK: settings.topK ?? 64,
+  };
+
+  if (settings.maxOutputTokens) {
+    config.maxOutputTokens = settings.maxOutputTokens;
+    // Reserved thinking budget if applicable
+    if (settings.thinkingBudget) {
+      config.thinkingConfig = { thinkingBudget: settings.thinkingBudget };
+    }
+  }
+
+  return config;
+};
+
 export const fetchAvailableModels = async (): Promise<string[]> => {
-  // Simulating a prefetch delay for the model registry
-  await new Promise(r => setTimeout(r, 800));
+  await new Promise(r => setTimeout(r, 600));
   return [
     "gemini-3-flash-preview",
     "gemini-3-pro-preview",
@@ -27,7 +44,7 @@ export const fetchAvailableModels = async (): Promise<string[]> => {
     "gemini-2.5-flash-lite-latest",
     "gemini-2.5-flash-image",
     "gemini-3-pro-image-preview",
-    "gemini-2.5-flash-native-audio-preview-12-2025"
+    "gemini-2.5-flash-preview-tts"
   ];
 };
 
@@ -40,6 +57,7 @@ export const validateApiKey = async (modelOverride?: string): Promise<Connectivi
     await ai.models.generateContent({
       model: model,
       contents: "ping",
+      config: getConfig(settings)
     });
     return { 
       isValid: true, 
@@ -49,7 +67,7 @@ export const validateApiKey = async (modelOverride?: string): Promise<Connectivi
   } catch (error: any) {
     return { 
       isValid: false, 
-      error: error.message || "Connection refused by endpoint." 
+      error: error.message || "Endpoint unreachable or authentication failure." 
     };
   }
 };
@@ -63,9 +81,10 @@ export const extractTextFromMultimodal = async (base64Data: string, mimeType: st
     contents: {
       parts: [
         { inlineData: { mimeType, data: base64Data } },
-        { text: "Extract text from this document as plain text." }
+        { text: "Extract all text from this resume document precisely. Maintain headers." }
       ]
-    }
+    },
+    config: getConfig(settings)
   });
   return response.text || "";
 };
@@ -76,8 +95,11 @@ export const analyseWithIntelligence = async (cvText: string): Promise<NonNullab
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: model,
-    contents: `Analyse CV: ${cvText}`,
+    contents: `Analyse the following professional CV for a South African applicant:
+    
+    ${cvText.slice(0, 15000)}`,
     config: {
+      ...getConfig(settings),
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -93,11 +115,13 @@ export const analyseWithIntelligence = async (cvText: string): Promise<NonNullab
               properties: {
                 category: { type: Type.STRING },
                 skills: { type: Type.ARRAY, items: { type: Type.STRING } }
-              }
+              },
+              required: ["category", "skills"]
             }
           },
           suggestedKeywords: { type: Type.ARRAY, items: { type: Type.STRING } }
-        }
+        },
+        required: ["summary", "strengths", "missingKeywords", "toneCheck", "categorizedSkills", "suggestedKeywords"],
       }
     }
   });
@@ -110,7 +134,10 @@ export const enhanceCVContent = async (originalText: string, instruction: string
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: model,
-    contents: `Refine: ${originalText}. Task: ${instruction}`,
+    contents: `Improve the following content. Instruction: ${instruction}
+    
+    Content: ${originalText}`,
+    config: getConfig(settings)
   });
   return response.text || "";
 };
@@ -121,8 +148,9 @@ export const analyseJobDescription = async (jd: string): Promise<JobAnalysisResu
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: model,
-    contents: `Analyse JD: ${jd}`,
+    contents: `Extract requirements from this JD: ${jd}`,
     config: {
+      ...getConfig(settings),
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -133,7 +161,8 @@ export const analyseJobDescription = async (jd: string): Promise<JobAnalysisResu
           softSkills: { type: Type.ARRAY, items: { type: Type.STRING } },
           responsibilities: { type: Type.ARRAY, items: { type: Type.STRING } },
           cultureFit: { type: Type.STRING }
-        }
+        },
+        required: ["roleTitle", "keywords", "hardSkills", "softSkills", "responsibilities", "cultureFit"],
       }
     }
   });
@@ -146,7 +175,8 @@ export const generateProfessionalLetter = async (cv: string, jd?: string): Promi
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: model,
-    contents: `Letter for: CV: ${cv}, JD: ${jd}`
+    contents: `Draft a cover letter. CV Context: ${cv}. Job Context: ${jd || "General"}`,
+    config: getConfig(settings)
   });
   return response.text || "";
 };

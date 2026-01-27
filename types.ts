@@ -71,6 +71,13 @@ export interface UserSettings {
   analysisModel?: string;
   enhancementModel?: string;
   visionModel?: string;
+  // Advanced parameters
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+  maxOutputTokens?: number;
+  thinkingBudget?: number;
+  customEndpoint?: string;
 }
 
 export interface SavedSession {

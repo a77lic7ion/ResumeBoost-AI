@@ -71,6 +71,7 @@ export interface UserSettings {
   preferredProvider?: IntelligenceProvider;
   analysisModel?: string;
   enhancementModel?: string;
+  visionModel?: string;
 }
 
 export interface SavedSession {

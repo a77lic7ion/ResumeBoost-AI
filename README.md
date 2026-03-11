@@ -27,6 +27,12 @@
   - **ATS Compatibility:** Ensures standard section naming.
   - **Keywords:** Analyzes keyword density and relevance.
   - **Impact:** Measures the use of quantifiable metrics and action verbs.
+ 
+<img width="923" height="1020" alt="image" src="https://github.com/user-attachments/assets/74d6033c-dbe9-4aa6-9706-c858037ebe03" />
+<img width="1622" height="676" alt="image" src="https://github.com/user-attachments/assets/cd41f2b5-6864-425e-840e-987f2952b912" />
+<img width="1627" height="736" alt="image" src="https://github.com/user-attachments/assets/5e5f96dc-7343-4da3-8c28-5dba07abf1fa" />
+<img width="783" height="818" alt="image" src="https://github.com/user-attachments/assets/bfa106a8-797a-4e8d-997b-1e556edeba71" />
+
 
 ### 🤖 AI-Powered Analysis & Repair
 - **Gemini 2.5 Integration:** Uses the latest Google GenAI models for deep text understanding.
@@ -39,6 +45,9 @@
 - **Isolated Preview:** Real-time resume rendering in an isolated environment (Iframe) to prevent style conflicts.
 - **Templates:** Switch between **Modern**, **Classic**, and **Minimal** designs instantly.
 - **Smart Prompts:** Context-aware suggestions based on your specific resume score (e.g., "Quantify Achievements", "Fix Formatting").
+
+<img width="1406" height="779" alt="image" src="https://github.com/user-attachments/assets/600e2fae-7cc5-4d5f-b921-0a47e2c38726" />
+
 
 ### 📤 Export & Privacy
 - **High-Fidelity Export:** Download optimized resumes as **PDF** (via browser print) or **DOCX**.
